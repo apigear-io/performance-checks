@@ -1,44 +1,51 @@
 #pragma once
 
-#include "olink/clientregistry.h"
-#include "apigear/olink/olinkclient.h"
+#include "apigear/mqtt/mqttclient.h"
+#include "test_message_topics.h"
 #include <vector>
 #include <string>
 #include <memory>
 
 
-class OLinkHandlerForTest
+class MqttHandlerForTest
 {
 public:
-    OLinkHandlerForTest(QString hostAddress, uint32_t portNumber)
+    MqttHandlerForTest(QString hostAddress, uint32_t portNumber)
         :host(hostAddress),
         port(portNumber)
     {
+        m_client = std::make_unique<ApiGear::Mqtt::Client>("VeryUniqueClientId");
     }
 
     void prepareConnection()
     {
-        auto full_address = "ws://" + host.toStdString() + ":" + std::to_string(port) + "/ws";
-        auto qstringAddr = QString::fromStdString(full_address);
-        auto url = QUrl(qstringAddr);
-        m_client = std::make_unique<ApiGear::ObjectLink::OLinkClient>(m_registry);
-        m_client->connectToHost(url);
+        m_client->connectToHost(host,port);
     }
 
     template<class TestData>
     void connectObjects(std::vector<TestData>& testData)
     {
+        while (!m_client->isReady())
+        {
+            // wait until ready to use.
+        }
         for (auto& element : testData)
         {
-            m_client->linkObjectSource(element.sink);
+            QString name = element.sink->objectName();
+            m_client->setRemoteProperty(TestMessages::clientStartsTestTopic, {name.toStdString()});
         }
     }
-
 
     template<class TestData>
     void connectObjects(TestData& testData)
     {
-        m_client->linkObjectSource(testData.sink);
+
+        while (!m_client->isReady())
+        {
+            // wait until ready to use.
+        }
+        QString name = testData.sink->objectName();
+        m_client->setRemoteProperty(TestMessages::clientStartsTestTopic,{name.toStdString()});
     }
 
     template<class TestData>
@@ -46,18 +53,20 @@ public:
     {
         for (auto& element : testData)
         {
-            m_client->unlinkObjectSource(element.sink->olinkObjectName());
+            QString name = element.sink->objectName();
+            m_client->setRemoteProperty(TestMessages::clientStopsTestTopic, {name.toStdString()});
         }
     }
-
     template<class TestData>
     void disconnectObjects(TestData& testData)
     {
-        m_client->unlinkObjectSource(testData.sink->olinkObjectName());
+        qDebug()<<"sending STOP ";
+        QString name = testData.sink->objectName();
+        m_client->setRemoteProperty(TestMessages::clientStopsTestTopic, {name.toStdString()});
     }
 
     template<class TestData>
-    void waitForReturnMessages(std::vector<TestData>& testData, uint32_t messages_number)
+    void waitForReturnMessages(const std::vector<TestData>& testData, uint32_t messages_number)
     {
         auto allMessagesReceived = false;
         while (!allMessagesReceived)
@@ -92,9 +101,12 @@ public:
             // wait until ready to use.
         }
     }
+    ApiGear::Mqtt::Client& getClient()
+    {
+        return *(m_client.get());
+    }
 private:
     QString host;
     uint32_t port;
-    ApiGear::ObjectLink::ClientRegistry m_registry;
-    std::unique_ptr<ApiGear::ObjectLink::OLinkClient> m_client;
+    std::unique_ptr<ApiGear::Mqtt::Client> m_client;
 };
