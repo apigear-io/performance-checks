@@ -23,7 +23,7 @@ include(FetchContent)
 
 FetchContent_Declare(qtpromise
   GIT_REPOSITORY https://github.com/simonbrunel/qtpromise.git
-  GIT_TAG v0.6.0
+  GIT_TAG v0.7.0
   GIT_SHALLOW true
 )
 
@@ -35,5 +35,5 @@ add_subdirectory(testApi)
 include_directories(testApi/thirdparty)
 add_subdirectory(olink_tests/many_objects)
 add_subdirectory(olink_tests/single_object_many_threads)
-
+add_subdirectory(mqtt_tests/single_object_many_threads)
 

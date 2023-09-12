@@ -24,9 +24,8 @@ WARNING after test ends it quits application.
 template <class TestData, class NetworkProtocolHandler>
 std::future<void> executeTestFunction(TestData& testObject, NetworkProtocolHandler& networkProtocolHandler, uint32_t execute_times, uint32_t threadCount)
 {
-    auto portNumber = 8000;
-    auto hostAddress = "127.0.0.1";
-    networkProtocolHandler.prepareConnection(hostAddress, portNumber);
+
+    networkProtocolHandler.prepareConnection();
 
     auto clientThread = std::async(std::launch::async,
         [threadCount, execute_times, &testObject, &networkProtocolHandler](){
@@ -35,8 +34,7 @@ std::future<void> executeTestFunction(TestData& testObject, NetworkProtocolHandl
         std::vector<std::shared_future<void>> tasks;
         auto begin = std::chrono::high_resolution_clock::now();
 
-        std::vector<TestData> testData = { testObject };
-        networkProtocolHandler.connectObjects(testData);
+        networkProtocolHandler.connectObjects(testObject);
         networkProtocolHandler.waitUntilObjectConnected(testObject);
 
         for (int threadNo = 0u; threadNo < threadCount; threadNo++)
@@ -55,11 +53,11 @@ std::future<void> executeTestFunction(TestData& testObject, NetworkProtocolHandl
         {
             task.wait();
         }
-        networkProtocolHandler.waitForReturnMessages(testData, threadCount * execute_times );
-        networkProtocolHandler.disconnectObjects(testData);
+        networkProtocolHandler.waitForReturnMessages(testObject, threadCount * execute_times );
+        networkProtocolHandler.disconnectObjects(testObject);
 
         auto end = std::chrono::high_resolution_clock::now();
-
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
         auto time = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
         std::cout << "Time measured: " << time.count() << std::endl;
         std::cout << "Objects number: 1" << std::endl;

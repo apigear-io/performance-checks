@@ -23,7 +23,7 @@ namespace{
 
 OlinkConnection::OlinkConnection(ApiGear::ObjectLink::ClientRegistry& registry)
     : m_node(ApiGear::ObjectLink::ClientNode::create(registry)),
-    m_socket(*this, true),
+    m_socket(*this, false),
     m_isConnecting(false)
 {
     auto writeFunction = [this](const auto& msg) {

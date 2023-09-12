@@ -9,7 +9,7 @@ layers:
     output: ../cpp/testApi
     template: ../../template-cpp14
     force: true
-    features: ["olink", "stubs", "conan" ]
+    features: ["olink", "stubs"]
   - name: qt
     inputs:
       - performance_interface100.module.yaml
