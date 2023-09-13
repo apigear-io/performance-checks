@@ -50,7 +50,13 @@ def main():
     print(current_scenario.clients)
     for parameter in current_scenario.client_execution_parameters:
         for server in current_scenario.servers:
+            if not os.path.isfile(server):
+                print("Server file doesn't exist")
+                return
             for client in current_scenario.clients:
+                if not os.path.isfile(client):
+                    print("Client file doesn't exist")
+                    return
                 p1 = subprocess.Popen(server, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 sleep(0.4)
                 p2 = subprocess.Popen(client + " " + parameter, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -60,6 +66,10 @@ def main():
                 except subprocess.TimeoutExpired:
                     p1.kill()
                     p2.kill()
+                    print("Timeout for pair")
+                    print(client)
+                    print(server)
+                    return
                 server_outcome_lines = p1.communicate()[0].decode().split('\r\n')
                 client_outcome_lines = p2.communicate()[0].decode().split('\r\n')
                 test_info = prepareTestInfo(client_outcome_lines, server, client, scenarioPath)
@@ -99,7 +109,7 @@ def prepareTestInfo(outcome_lines, server, client, scenarioPath):
     #test_info += "| min time: NO INFO"
     #test_info += "| number of runs: NO INFO"
     test_info += "| messages number per client: " + str(mesagesNo)
-    test_info += "| average throughput:" + str(((mesagesNo*clientsNo)/testDuration)) + " [messages/ms]"
+    test_info += "| average throughput:" + str(((mesagesNo*clientsNo)/testDuration)/2) + " [messages/ms]"
     return test_info
 
 

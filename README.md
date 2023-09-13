@@ -1,13 +1,14 @@
-#project purpose
-
-#project content
-
+#project purpose:
 Tests were created to find bottle necks in templates to run under performance profiler tool(e.g. Visual Studio Performance Profiler)
-They also provide some time measurements which may be used to compare different technologies and protocols
+They also provide some time measurements which may be used to compare different technologies and protocols, or just give more-less information about possible efficiency.
 
 Tests do not use any test framework - to exclude 3rd party calls
 Tests use generated implementation of apigear/performance_interface.module for test sinks and source - this contains basic API which is then replicated 100 with apigear/GenerateIdl.py script stored in apigear\performance_interface100.module.yaml. This file is then used for performance.solution.yaml
 Performance.solution.yaml contains all technologies for which API is generated and used for tests.
+
+TEST RESULTS ARE AVAILABLE IN JOBS
+
+#project content
 
 Repository contains tests for different technologies - goal would be that server and client have same scenarios so the execution time can be compared cross -technology.
 Ideally you could not only server and client in same tchnology but also  run client scenario in technology A and a server in technology B.
@@ -26,6 +27,9 @@ The server part only responds to client requests with default implementation (so
 To run test:
 1. Start server side - either from console or using performance profiler
 2. Start one of client side tests - either from console or using performance profiler 
+OR use test runner with test scenarios it runs all listed servers with all listed clients
+the parameter list [] next to client contains a message number to be send from single thread.
+Have in mind that you need to make sure that executables find all the neceassry dlls (either set paths for them or just copy the dlls into the folders).
 
 
 Real object with network layer are used for tests.
