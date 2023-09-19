@@ -66,7 +66,7 @@ public:
     }
 
     template<class TestData>
-    void waitForReturnMessages(const std::vector<TestData>& testData, uint32_t messages_number)
+    void waitForReturnMessages(std::vector<TestData>& testData, uint32_t messages_number)
     {
         auto allMessagesReceived = false;
         while (!allMessagesReceived)
@@ -74,7 +74,7 @@ public:
             auto serviceWithAllMessages = 0u;
             for (const auto& element : testData)
             {
-                if (element.sink->propertyChangedTimes == messages_number)
+                if (element.sink->receivedMessages() == messages_number)
                 {
                     serviceWithAllMessages++;
                 }
@@ -89,7 +89,7 @@ public:
         auto allMessagesReceived = false;
         while (!allMessagesReceived)
         {
-            allMessagesReceived = testData.sink->propertyChangedTimes == messages_number;
+            allMessagesReceived = testData.sink->receivedMessages() == messages_number;
         }
     }
 
