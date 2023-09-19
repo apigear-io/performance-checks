@@ -10,8 +10,9 @@ CLIENT_NUMBER_SEARCH_TEXT = "Objects number:"
 EXECUTION_NUMBER_SEARCH_TEXT = "Function execution number for each object:"
 
 
+#requires CPP_BUILD and QT_BUILD to point to output
 class scenario:
-    def __init__(self, relative_file_path):
+    def __init__(self, relative_file_path, cpp_build_path, qt_build_path):
 
         self.servers = []
         self.clients = []
@@ -33,8 +34,22 @@ class scenario:
             elif line.lstrip().startswith('['):
                 self.client_execution_parameters = line.strip('[').rstrip('\n').rstrip(']').split()
             elif  readingServers:
-                self.servers.append(line.rstrip('\n'))
+                element = line.rstrip('\n');
+                if element.lstrip().startswith("CPP_BUILD")
+                    element = element.strip("CPP_BUILD")
+                    element = cpp_build_path + element
+                if element.lstrip().startswith("QT_BUILD")
+                    element = element.strip("QT_BUILD")
+                    element = qt_build_path + element
+                self.servers.append(element)
             elif  readingClients:
+                element = line.rstrip('\n');
+                if element.lstrip().startswith("CPP_BUILD")
+                    element = element.strip("CPP_BUILD")
+                    element = cpp_build_path + element
+                if element.lstrip().startswith("QT_BUILD")
+                    element = element.strip("QT_BUILD")
+                    element = qt_build_path + element
                 self.clients.append(line.rstrip('\n'))
 
 

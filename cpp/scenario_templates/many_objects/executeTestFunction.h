@@ -3,6 +3,7 @@
 #include <iostream>
 #include <algorithm>
 #include <future>
+#include <vector>
 
 /**
 Template for simple scenario. This is successful case scenario.

@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <future>
 #include <QCoreApplication>
+#include <thread>
 
 /**
 Template for simple scenario. This is successful case scenario.
