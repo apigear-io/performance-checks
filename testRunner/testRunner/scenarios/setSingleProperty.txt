@@ -1,9 +1,0 @@
-servers:
-../../cpp/out/build/x64-Debug/single_object/single_server.exe
-../../build-qt-Desktop_Qt_6_5_2_MSVC2019_64bit-Debug/olink/single_object/single_server.exe
-clients:
-[10 100 1000]
-../../cpp/out/build/x64-Debug/single_object/single_client_setIntProperty.exe
-../../build-qt-Desktop_Qt_6_5_2_MSVC2019_64bit-Debug/olink/single_object/single_client_setIntProperty.exe
-../../cpp/out/build/x64-Debug/single_object/single_client_setStringProperty.exe
-../../build-qt-Desktop_Qt_6_5_2_MSVC2019_64bit-Debug/olink/single_object/single_client_setStringProperty.exe

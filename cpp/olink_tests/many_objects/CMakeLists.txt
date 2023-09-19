@@ -7,7 +7,7 @@ set(JSON_BuildTests OFF)
 
 find_package(api COMPONENTS api-olink  api-implementation)
 
-set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/many_object )
+set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/olink/many_objects )
 
 add_executable(client_setIntProperty "client_setIntProperty.cpp" )
 add_executable(client_setFloatProperty "client_setFloatProperty.cpp" )

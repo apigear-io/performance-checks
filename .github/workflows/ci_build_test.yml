@@ -1,0 +1,160 @@
+name: Technology Template Build Test
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  cmake_build:
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - { name: "CMake Windows Latest MSVC", os: windows-latest }
+          - { name: "CMake Ubuntu Latest GCC", os: ubuntu-latest }
+          - { name: "CMake macOS Latest Clang", os: macos-latest }
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.13
+        with:
+          cmake-version: '3.24.x'
+    # CHECKOUT templates and generate APIs
+      - name: create dir and checkout qt template
+        run: mkdir template-qtcpp
+      - uses: actions/checkout@v3
+        with:
+          repository: apigear-io/template-qtcpp
+          ref: 'dphan/mqtt'
+          path: template-qtcpp
+
+      - name: create dir cpp template
+        run: mkdir template-cpp14
+      - uses: actions/checkout@v3
+        with:
+          repository: apigear-io/template-cpp14
+          path: template-cpp14
+      - name: Install Go
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('**/go.sum') }}
+          restore-keys: ${{ runner.os }}-go-${{ matrix.go-version }}-
+
+      - name: Generate APIs
+        run: go run main.go install
+      - run: go run main.go generateAPI
+      ##QT BUILD
+      #- name: Install Qt
+      #  uses: jurplel/install-qt-action@v3
+      #  with:
+      #    version: '6.5.2'
+      #    cache: 'true'
+      #    modules: qtwebsockets
+      #- name: create mqtt dir
+      #  run: |
+      #      mkdir qtmqtt
+      #- name: Checkout QMqtt
+      #  uses: actions/checkout@v3
+      #  with:
+      #    repository: qt/qtmqtt
+      #    ref: '6.5.2'
+      #    path: qtmqtt
+      #- name: Build qmqtt windows
+      #  if: ${{ matrix.config.os == 'windows-latest'}}
+      #  working-directory: qtmqtt
+      #  run: |
+      #       cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo  -DCMAKE_CXX_FLAGS_DEBUG="-O2" .
+      #       cmake --build . --config RelWithDebInfo
+      #       cmake --install . --verbose 
+      #- name: Build qmqtt mac and linux
+      #  if: ${{ matrix.config.os != 'windows-latest'}}
+      #  working-directory: qtmqtt
+      #  run: |
+      #       cmake .
+      #       cmake --build .
+      #       cmake --install . --verbose
+      #
+      #
+      #- name: Qt build (Windows update path env)
+      #  if: ${{ matrix.config.os == 'windows-latest'}}
+      #  run: echo "$GITHUB_WORKSPACE/qt/build/bin/Debug/" >> $GITHUB_PATH
+      #- name:  qt api build
+      #  working-directory: qt
+      #  env:
+      #      CTEST_OUTPUT_ON_FAILURE: 1
+      #  run: cmake -Bbuild -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=tmp && cmake --build build/ && cmake --build build/
+        #BUILD CPP
+
+      - name: Cache conan on Windows
+        uses: actions/cache@v3
+        if: ${{ matrix.config.os == 'windows-latest'}}
+        with:
+          path: |
+            ~\.conan\data
+          key: ${{ matrix.config.os }}-conan4cmake-release-cache-${{ hashFiles('.github/workflows/ci_build_test.yml') }}
+          restore-keys: |
+            ${{ matrix.config.os }}-conan4cmake-release-cache
+      - name: Cache conan on Linux/macOS
+        uses: actions/cache@v3
+        if: ${{ matrix.config.os != 'windows-latest'}}
+        with:
+          path: |
+            ~/.conan/data
+          key: ${{ matrix.config.os }}-conan4cmake-release-cache-${{ hashFiles('.github/workflows/ci_build_test.yml') }}
+          restore-keys: |
+            ${{ matrix.config.os }}-conan4cmake-release-cache
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.x'
+          cache: "pip"
+          cache-dependency-path: ".github/workflows/conan-requirements.txt"
+      - name: Install Conan
+        run: pip3 install -r .github/workflows/conan-requirements.txt
+      - name: Create release profile
+        run: conan profile new release --detect
+      - name: Set Release and C++11 on Linux
+        if: ${{ matrix.config.os == 'ubuntu-latest'}}
+        run: |
+            conan profile update settings.compiler.libcxx=libstdc++11 release
+            conan profile update settings.build_type=Release release
+      - name: Set Release and runtime on Windows
+        if: ${{ matrix.config.os == 'windows-latest'}}
+        run: |
+          conan profile update settings.compiler.runtime=MD release
+          conan profile update settings.build_type=Release release
+      - run: mkdir -p deps
+      - name: Install poco using conan
+        run: |
+          cd deps && conan install --profile release poco/1.11.3@ --build missing -o poco:shared=False -o poco:enable_data_mysql=False -o openssl:shared=False -o poco:enable_activerecord=False -o poco:enable_apacheconnector=False -o poco:enable_cppparser=False -o poco:enable_crypto=True -o poco:enable_data=False -o poco:enable_data_odbc=False -o poco:enable_data_postgresql=False -o poco:enable_data_sqlite=False -o poco:enable_encodings=False -o poco:enable_json=False -o poco:enable_jwt=False -o poco:enable_mongodb=False -o poco:enable_net=True -o poco:enable_netssl=True -o poco:enable_pagecompiler=False -o poco:enable_pagecompiler_file2page=False -o poco:enable_pdf=False -o poco:enable_pocodoc=False -o poco:enable_redis=False -o poco:enable_sevenzip=False -o poco:enable_util=True -o poco:enable_xml=False -o poco:enable_zip=False --generator cmake_find_package --generator virtualenv
+      - name: Install paho.mqtt.c using conan
+        run: |
+          cd deps && conan install --profile release paho-mqtt-c/1.3.12@ --build missing -o paho-mqtt-c:shared=False --generator cmake_find_package --generator virtualenv
+      - name: Run cmake on Linux/Mac
+        if: ${{ matrix.config.os != 'windows-latest'}}
+        working-directory: cpp
+        run: cmake -Bbuild -DCMAKE_INSTALL_PREFIX=tmp -DCMAKE_MODULE_PATH=$GITHUB_WORKSPACE/deps -DCMAKE_BUILD_TYPE=Release && cmake --build build/ --config Release && cmake --build build/ --target install --config Release
+      - name: Update path env on Windows for testing
+        if: ${{ matrix.config.os == 'windows-latest'}}
+        run: echo "$GITHUB_WORKSPACE/cpp/build/bin/Debug/" >> $GITHUB_PATH
+      - name: Run cmake on Windows
+        if: ${{ matrix.config.os == 'windows-latest'}}
+        working-directory: cpp
+        run: |
+          $Env:GITHUB_WORKSPACE_UNIX = "${{ github.workspace }}" -replace "\\","/"
+          cmake -Bbuild -DCMAKE_INSTALL_PREFIX=tmp -DCMAKE_MODULE_PATH="$Env:GITHUB_WORKSPACE_UNIX/deps" -DCMAKE_BUILD_TYPE=Release && cmake --build build/ --config Release && cmake --build build/ --target install --config Release
+      - name: Archive cpp release artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: cpp-install-artifacts-${{ matrix.config.os }}
+          path: |
+            cpp/tmp
+          retention-days: 5
+#TODO use runner for build tests
