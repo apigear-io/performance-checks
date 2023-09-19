@@ -36,4 +36,5 @@ include_directories(testApi/thirdparty)
 add_subdirectory(olink_tests/many_objects)
 add_subdirectory(olink_tests/single_object_many_threads)
 add_subdirectory(mqtt_tests/single_object_many_threads)
+add_subdirectory(mqtt_tests/many_objects)
 

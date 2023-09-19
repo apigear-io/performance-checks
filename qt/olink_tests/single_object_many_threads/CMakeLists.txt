@@ -7,7 +7,7 @@ set(JSON_BuildTests OFF)
 
 find_package(api COMPONENTS  api_impl api_olink)
 
-set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/single_object )
+set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/olink/single_object )
 
 
 add_executable(single_client_setIntProperty "client_setIntProperty.cpp" )
