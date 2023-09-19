@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(JSON_BuildTests OFF)
 
-find_package(api COMPONENTS olink-performance-helper)
+#find_package(api COMPONENTS olink-performance-helper)
 
 
 if(NOT TARGET check)
@@ -15,4 +15,3 @@ endif()
 add_subdirectory(testApi)
 add_subdirectory(olink_tests/many_objects)
 add_subdirectory(olink_tests/single_object_many_threads)
-
