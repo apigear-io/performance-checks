@@ -1,6 +1,6 @@
 schema: "apigear.solution/1.0"
 name: performance
-version: "0.1"
+version: "0.1.0"
 
 layers:
   - name: cpp
@@ -9,11 +9,11 @@ layers:
     output: ../cpp/testApi
     template: ../../template-cpp14
     force: true
-    features: ["olink", "stubs"]
+    features: ["olink", "stubs", "conan" ]
   - name: qt
     inputs:
       - performance_interface100.module.yaml
     output: ../qt/testApi
     template: ../../template-qtcpp
     force: true
-    features: ["olink", "stubs"]
+    features: ["olink", "stubs", "mqtt"]
