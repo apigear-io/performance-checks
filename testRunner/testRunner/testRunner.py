@@ -35,61 +35,84 @@ class scenario:
                 self.client_execution_parameters = line.strip('[').rstrip('\n').rstrip(']').split()
             elif  readingServers:
                 element = line.rstrip('\n');
-                if element.lstrip().startswith("CPP_BUILD")
+                if element.lstrip().startswith("CPP_BUILD"):
                     element = element.strip("CPP_BUILD")
                     element = cpp_build_path + element
-                if element.lstrip().startswith("QT_BUILD")
+                if element.lstrip().startswith("QT_BUILD"):
                     element = element.strip("QT_BUILD")
                     element = qt_build_path + element
                 self.servers.append(element)
             elif  readingClients:
                 element = line.rstrip('\n');
-                if element.lstrip().startswith("CPP_BUILD")
+                if element.lstrip().startswith("CPP_BUILD"):
                     element = element.strip("CPP_BUILD")
                     element = cpp_build_path + element
-                if element.lstrip().startswith("QT_BUILD")
+                if element.lstrip().startswith("QT_BUILD"):
                     element = element.strip("QT_BUILD")
                     element = qt_build_path + element
-                self.clients.append(line.rstrip('\n'))
+                self.clients.append(element)
 
 
 def main():
     scenarioPath =""
+    cpp_build_path = ""
+    qt_build_path = ""
     args = sys.argv[1:]
-    if len(args) == 1:
+    if len(args) > 0:
         scenarioPath = args[0]
-        
-    current_scenario = scenario(scenarioPath);
+    if len(args) > 1:
+        cpp_build_path = args[1]
+    if len(args) > 2:
+        qt_build_path = args[2]
+
+    current_scenario = scenario(scenarioPath, cpp_build_path, qt_build_path);
 
     print(current_scenario.servers)
     print(current_scenario.clients)
+    firstLine = "scenario: " + scenarioPath
+    linesToWrite = [  firstLine ]
     for parameter in current_scenario.client_execution_parameters:
-        for server in current_scenario.servers:
-            if not os.path.isfile(server):
-                print("Server file doesn't exist")
-                return
-            for client in current_scenario.clients:
-                if not os.path.isfile(client):
-                    print("Client file doesn't exist")
-                    return
+        linesToWrite.append("client parameter: "+ str(parameter))
+        for client in current_scenario.clients:
+            if not os.path.isfile(client):
+                print("Client file doesn't exist")
+                return -1
+            for server in current_scenario.servers:
+                if not os.path.isfile(server):
+                    print("Server file doesn't exist")
+                    return -1
                 p1 = subprocess.Popen(server, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 sleep(0.4)
                 p2 = subprocess.Popen(client + " " + parameter, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 try:
-                    p1.wait(120)
-                    p2.wait(120)
+                    p1.wait(60)
+                    p2.wait(60)
                 except subprocess.TimeoutExpired:
                     p1.kill()
                     p2.kill()
                     print("Timeout for pair")
                     print(client)
                     print(server)
-                    return
+                    return -1
                 server_outcome_lines = p1.communicate()[0].decode().split('\r\n')
                 client_outcome_lines = p2.communicate()[0].decode().split('\r\n')
+                if (len(server_outcome_lines[0]) == 0):
+                    print("someting went wrong when running test, check if your exe can be run")
+                    print("running " + server)
+                    continue
+                if (len(client_outcome_lines[0]) == 0):
+                    print("someting went wrong when running test, check if your exe can be run")
+                    print("running " + client)
+                    continue
                 test_info = prepareTestInfo(client_outcome_lines, server, client, scenarioPath)
                 print(test_info)
+                linesToWrite.append(test_info)
                 sleep(0.4)
+    scenarioPath = scenarioPath.split("/")
+    resultFileName = "report_" +  scenarioPath[len(scenarioPath) -1]
+    output_file = open(resultFileName,'w')
+    output_file.writelines(line + '\n' for line in linesToWrite)
+    return 0
 
 
 def getInfoFromOutput(lines, search_text):
@@ -111,26 +134,27 @@ def prepareTestInfo(outcome_lines, server, client, scenarioPath):
     
     #no msg size info from test!
     #Time measured: 1025', 'Objects number: 1', 'Function execution number for each object: 10000'
-    test_info = "scenario: " + scenarioPath
-    #test_info += "| msg format: " + "JSON"
-    #test_info += "| msg size: NO INFO"
-    test_info += "| number of clients: " + str(clientsNo)
-    test_info += "| client technology: " + clientTechnology
-    test_info += "| client name: " + clientName
-    test_info += "| server technology: " + serverTechnology
-    test_info += "| server name: " + serverName
-    test_info += "| average time: [ms] " + str(testDuration)
-    #test_info += "| max time: NO INFO"
-    #test_info += "| min time: NO INFO"
-    #test_info += "| number of runs: NO INFO"
-    test_info += "| messages number per client: " + str(mesagesNo)
-    test_info += "| average throughput:" + str(((mesagesNo*clientsNo)/testDuration)/2) + " [messages/ms]"
+    #test_info += " | msg format: " + "JSON"
+    #test_info += " | msg size: NO INFO"
+    test_info = "Clients number: " + str(clientsNo)
+    test_info += " | msgs per client: " + str(mesagesNo)
+    test_info += " | Tech: client " + clientTechnology
+    test_info += "; server " + serverTechnology
+    test_info += " | test time [ms]: " + str(testDuration)
+    #test_info += " | max time: NO INFO"
+    #test_info += " | min time: NO INFO"
+    #test_info += " | number of runs: NO INFO"
+    throughput = format(((mesagesNo*2*clientsNo)/testDuration), ".2f")
+    test_info += " | avg. throughput [msgs/ms]: " + throughput
+    test_info += " | client: " + clientName
+    test_info += " | server: " + serverName
     return test_info
 
 
 def getTechnologyAndName(executablePath):
     exeInfo = executablePath.split("/");
     exeInfo = list(filter(("..").__ne__, exeInfo))
+    exeInfo = list(filter((".").__ne__, exeInfo))
     exeTechnology = exeInfo[0];
     if exeTechnology.find("build-qt") != -1:
         exeTechnology = "qt"

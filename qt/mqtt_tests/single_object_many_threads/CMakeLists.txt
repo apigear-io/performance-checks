@@ -14,11 +14,10 @@ set(CMAKE_AUTORCC ON)
 find_package(api COMPONENTS  api_impl api_mqtt)
 find_package(Qt6 COMPONENTS Core REQUIRED)
 
-set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/mqtt/single_object )
+set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 
 add_executable(mqtt_single_client_setIntProperty "client_setIntProperty.cpp" )
-
 add_executable(mqtt_single_client_setStringProperty "client_setStringProperty.cpp" )
 add_executable(mqtt_single_server "server.cpp" )
 

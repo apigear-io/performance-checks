@@ -7,15 +7,13 @@ set(JSON_BuildTests OFF)
 
 find_package(api COMPONENTS api-olink  api-implementation)
 
-set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/olink/single_object )
+set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-add_executable(single_client_setIntProperty "client_setIntProperty.cpp" )
-#add_executable(client_setFloatProperty "client_setFloatProperty.cpp" )
-add_executable(single_client_setStringProperty "client_setStringProperty.cpp" )
-add_executable(single_server "server.cpp" )
+add_executable(olink_single_client_setIntProperty "client_setIntProperty.cpp" )
+add_executable(olink_single_client_setStringProperty "client_setStringProperty.cpp" )
+add_executable(olink_single_server "server.cpp" )
 
-target_link_libraries(single_client_setIntProperty api::api-olink)
-#target_link_libraries(client_setFloatProperty api::api-olink)
-target_link_libraries(single_client_setStringProperty api::api-olink)
-target_link_libraries(single_server api::api-olink  api::api-implementation)
+target_link_libraries(olink_single_client_setIntProperty api::api-olink)
+target_link_libraries(olink_single_client_setStringProperty api::api-olink)
+target_link_libraries(olink_single_server api::api-olink  api::api-implementation)
 
