@@ -3,6 +3,9 @@ name: Technology Template Build Test
 on:
   pull_request:
     branches: [main]
+    #schedule:
+      # Every Monday at 0:00 UTC
+      #- cron: "0 0 * * 1"
 
 jobs:
   cmake_build:
@@ -37,6 +40,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           repository: apigear-io/template-cpp14
+          ref: 'dphan/fix'
           path: template-cpp14
       - name: Install Go
         uses: actions/cache@v3
@@ -50,46 +54,56 @@ jobs:
       - name: Generate APIs
         run: go run main.go install
       - run: go run main.go generateAPI
-      ##QT BUILD
-      #- name: Install Qt
-      #  uses: jurplel/install-qt-action@v3
-      #  with:
-      #    version: '6.5.2'
-      #    cache: 'true'
-      #    modules: qtwebsockets
-      #- name: create mqtt dir
-      #  run: |
-      #      mkdir qtmqtt
-      #- name: Checkout QMqtt
-      #  uses: actions/checkout@v3
-      #  with:
-      #    repository: qt/qtmqtt
-      #    ref: '6.5.2'
-      #    path: qtmqtt
-      #- name: Build qmqtt windows
-      #  if: ${{ matrix.config.os == 'windows-latest'}}
-      #  working-directory: qtmqtt
-      #  run: |
-      #       cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo  -DCMAKE_CXX_FLAGS_DEBUG="-O2" .
-      #       cmake --build . --config RelWithDebInfo
-      #       cmake --install . --verbose 
-      #- name: Build qmqtt mac and linux
-      #  if: ${{ matrix.config.os != 'windows-latest'}}
-      #  working-directory: qtmqtt
-      #  run: |
-      #       cmake .
-      #       cmake --build .
-      #       cmake --install . --verbose
-      #
-      #
-      #- name: Qt build (Windows update path env)
-      #  if: ${{ matrix.config.os == 'windows-latest'}}
-      #  run: echo "$GITHUB_WORKSPACE/qt/build/bin/Debug/" >> $GITHUB_PATH
-      #- name:  qt api build
-      #  working-directory: qt
-      #  env:
-      #      CTEST_OUTPUT_ON_FAILURE: 1
-      #  run: cmake -Bbuild -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=tmp && cmake --build build/ && cmake --build build/
+      #QT BUILD, skip for now to get cpp result faster
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '6.5.2'
+          cache: 'true'
+          modules: qtwebsockets
+      - name: create mqtt dir
+        run: |
+            mkdir qtmqtt
+      - name: Checkout QMqtt
+        uses: actions/checkout@v3
+        with:
+          repository: qt/qtmqtt
+          ref: '6.5.2'
+          path: qtmqtt
+      - name: Build qmqtt windows
+        if: ${{ matrix.config.os == 'windows-latest'}}
+        working-directory: qtmqtt
+        run: |
+             cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo  -DCMAKE_CXX_FLAGS_DEBUG="-O2" .
+             cmake --build . --config RelWithDebInfo
+             cmake --install . --verbose 
+      - name: Build qmqtt mac and linux
+        if: ${{ matrix.config.os != 'windows-latest'}}
+        working-directory: qtmqtt
+        run: |
+             cmake .
+             cmake --build .
+             cmake --install . --verbose
+      
+      
+      - name: Qt build (Windows update path env)
+        if: ${{ matrix.config.os == 'windows-latest'}}
+        run: echo "$GITHUB_WORKSPACE/qt/build/bin/Debug/" >> $GITHUB_PATH
+      - name:  qt api and tests build
+        working-directory: qt
+        env:
+            CTEST_OUTPUT_ON_FAILURE: 1
+        run: cmake -Bbuild -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=tmp && cmake --build build/ && cmake --build build/
+      - name: CHECK OUTPUT 1
+        run: |
+          ls qt/build/
+      - name: CHECK OUTPUT 2
+        run: |
+          ls qt/build/bin
+      - name: CHECK OUTPUT windows
+        if: ${{ matrix.config.os == 'windows-latest'}}
+        run: |
+          ls qt/build/bin/Debug
         #BUILD CPP
 
       - name: Cache conan on Windows
@@ -137,19 +151,23 @@ jobs:
       - name: Install paho.mqtt.c using conan
         run: |
           cd deps && conan install --profile release paho-mqtt-c/1.3.12@ --build missing -o paho-mqtt-c:shared=False --generator cmake_find_package --generator virtualenv
-      - name: Run cmake on Linux/Mac
+      - name: cpp api and tests build for Linux/Mac
         if: ${{ matrix.config.os != 'windows-latest'}}
         working-directory: cpp
         run: cmake -Bbuild -DCMAKE_INSTALL_PREFIX=tmp -DCMAKE_MODULE_PATH=$GITHUB_WORKSPACE/deps -DCMAKE_BUILD_TYPE=Release && cmake --build build/ --config Release && cmake --build build/ --target install --config Release
       - name: Update path env on Windows for testing
         if: ${{ matrix.config.os == 'windows-latest'}}
-        run: echo "$GITHUB_WORKSPACE/cpp/build/bin/Debug/" >> $GITHUB_PATH
-      - name: Run cmake on Windows
+        run: echo "$GITHUB_WORKSPACE/cpp/build/bin/Release/" >> $GITHUB_PATH
+      - name: cpp api and tests build for windows
         if: ${{ matrix.config.os == 'windows-latest'}}
         working-directory: cpp
         run: |
           $Env:GITHUB_WORKSPACE_UNIX = "${{ github.workspace }}" -replace "\\","/"
           cmake -Bbuild -DCMAKE_INSTALL_PREFIX=tmp -DCMAKE_MODULE_PATH="$Env:GITHUB_WORKSPACE_UNIX/deps" -DCMAKE_BUILD_TYPE=Release && cmake --build build/ --config Release && cmake --build build/ --target install --config Release
+      - name: CHECK OUTPUT windows
+        if: ${{ matrix.config.os == 'windows-latest'}}
+        run: |
+          ls cpp/build/bin/Release
       - name: Archive cpp release artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -157,4 +175,23 @@ jobs:
           path: |
             cpp/tmp
           retention-days: 5
-#TODO use runner for build tests
+      - name: CHECK OUTPUT BUILD
+        run: |
+          ls cpp/build
+      - name: CHECK OUTPUT BIN
+        run: |
+          ls cpp/build/bin
+# Run tests
+      - name: RUN scenario olink, single object, set INT and STRING Property on WINDOWS
+        if: ${{ matrix.config.os == 'windows-latest'}}
+        run: py testRunner/testRunner/testRunner.py "testRunner/testRunner/scenarios/olink_single_object_setProperty.txt" "./cpp/build/bin/Release" "./qt/build/bin/Debug" -RunAsAdmin
+      - name: RUN scenario olink, single object, set INT and STRING Property on linux/mac
+        if: ${{ matrix.config.os != 'windows-latest'}}
+        run: sudo python testRunner/testRunner/testRunner.py "testRunner/testRunner/scenarios/olink_single_object_setProperty.txt" "cpp/build/bin" "qt/build/bin"
+      - name: RUN scenario olink, many objects, set INT and STRING Property on WINDOWS
+        if: ${{ matrix.config.os == 'windows-latest'}}
+        run: py testRunner/testRunner/testRunner.py "testRunner/testRunner/scenarios/olink_mulitple_objects_setProperty.txt" "./cpp/build/bin/Release" "./qt/build/bin/Debug" -RunAsAdmin
+      - name: RUN scenario olink, many objects, set INT and STRING Property on linux/mac
+        if: ${{ matrix.config.os != 'windows-latest'}}
+        run: sudo python testRunner/testRunner/testRunner.py "testRunner/testRunner/scenarios/olink_mulitple_objects_setProperty.txt" "cpp/build/bin" "qt/build/bin"
+

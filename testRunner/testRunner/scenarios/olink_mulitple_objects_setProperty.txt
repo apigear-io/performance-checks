@@ -1,0 +1,11 @@
+servers:
+CPP_BUILD/olink_multi_server.exe
+QT_BUILD/olink_multi_server.exe
+clients:
+[10 100 1000]
+CPP_BUILD/olink_multi_client_setIntProperty.exe
+QT_BUILD/olink_multi_client_setIntProperty.exe
+CPP_BUILD/olink_multi_client_setFloatProperty.exe
+QT_BUILD/olink_multi_client_setFloatProperty.exe
+CPP_BUILD/olink_multi_client_setStringProperty.exe
+QT_BUILD/olink_multi_client_setStringProperty.exe

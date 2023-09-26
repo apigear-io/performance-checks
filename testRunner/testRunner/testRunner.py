@@ -75,31 +75,40 @@ def main():
         linesToWrite.append("client parameter: "+ str(parameter))
         for client in current_scenario.clients:
             if not os.path.isfile(client):
-                print("Client file doesn't exist")
-                return -1
+                client = client.rstrip('.exe')
+                if not os.path.isfile(client):
+                    print("Client file doesn't exist" + client)
+                    return 1
             for server in current_scenario.servers:
                 if not os.path.isfile(server):
-                    print("Server file doesn't exist")
-                    return -1
+                    server = server.rstrip('.exe')
+                    if not os.path.isfile(server):
+                        print("Server file doesn't exist" + server)
+                        return 1
                 p1 = subprocess.Popen(server, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 sleep(0.4)
-                p2 = subprocess.Popen(client + " " + parameter, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                p2 = subprocess.Popen([client, parameter], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 try:
-                    p1.wait(60)
-                    p2.wait(60)
+                    p1.wait(300)
+                    p2.wait(300)
                 except subprocess.TimeoutExpired:
                     p1.kill()
                     p2.kill()
                     print("Timeout for pair")
                     print(client)
+                    print(p2.communicate()[0].decode())
                     print(server)
-                    return -1
-                server_outcome_lines = p1.communicate()[0].decode().split('\r\n')
-                client_outcome_lines = p2.communicate()[0].decode().split('\r\n')
+                    print(p1.communicate()[0].decode())
+                    return 1
+				# On Linux delimeter is only \n, replacing \r\n with \n makes split work on Linux and Windows platform
+                server_outcome_lines = p1.communicate()[0].decode().replace('\r\n', '\n').split('\n')
+                client_outcome_lines = p2.communicate()[0].decode().replace('\r\n', '\n').split('\n')
                 if (len(server_outcome_lines[0]) == 0):
                     print("someting went wrong when running test, check if your exe can be run")
                     print("running " + server)
                     continue
+                print("server info")
+                print(server_outcome_lines)
                 if (len(client_outcome_lines[0]) == 0):
                     print("someting went wrong when running test, check if your exe can be run")
                     print("running " + client)
@@ -107,7 +116,7 @@ def main():
                 test_info = prepareTestInfo(client_outcome_lines, server, client, scenarioPath)
                 print(test_info)
                 linesToWrite.append(test_info)
-                sleep(0.4)
+                sleep(1)
     scenarioPath = scenarioPath.split("/")
     resultFileName = "report_" +  scenarioPath[len(scenarioPath) -1]
     output_file = open(resultFileName,'w')

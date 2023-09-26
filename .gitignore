@@ -11,8 +11,9 @@ tsconfig.tsbuildinfo
 demo/
 **/.vs/*
 
-# do not add temporary test folder
-test/
+# do not generated files, CI generates it for itself
+cpp/testApi/*
+qt/testApi/*
 
 # do not add build folders
 build*/
