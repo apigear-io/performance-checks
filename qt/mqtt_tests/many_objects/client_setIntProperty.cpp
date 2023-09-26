@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
 {
     QCoreApplication app(argc, argv);
     std::vector<uint16_t> timePerMessage;
-    auto messages_number = 3u;
+    auto messages_number = 500u;
     if (argc > 1)
     {
         char* p;

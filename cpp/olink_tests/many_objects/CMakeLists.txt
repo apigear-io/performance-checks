@@ -9,13 +9,13 @@ find_package(api COMPONENTS api-olink  api-implementation)
 
 set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin )
 
-add_executable(olink_mulit_client_setIntProperty "client_setIntProperty.cpp" )
-add_executable(olink_mulit_client_setFloatProperty "client_setFloatProperty.cpp" )
-add_executable(olink_mulit_client_setStringProperty "client_setStringProperty.cpp" )
-add_executable(olink_mulit_server "server.cpp" "../helpers/prepare_test_services.cpp" )
+add_executable(olink_multi_client_setIntProperty "client_setIntProperty.cpp" )
+add_executable(olink_multi_client_setFloatProperty "client_setFloatProperty.cpp" )
+add_executable(olink_multi_client_setStringProperty "client_setStringProperty.cpp" )
+add_executable(olink_multi_server "server.cpp" "../helpers/prepare_test_services.cpp" )
 
-target_link_libraries(olink_mulit_client_setIntProperty api::api-olink)
-target_link_libraries(olink_mulit_client_setFloatProperty api::api-olink)
-target_link_libraries(olink_mulit_client_setStringProperty api::api-olink)
-target_link_libraries(olink_mulit_server api::api-olink  api::api-implementation)
+target_link_libraries(olink_multi_client_setIntProperty api::api-olink)
+target_link_libraries(olink_multi_client_setFloatProperty api::api-olink)
+target_link_libraries(olink_multi_client_setStringProperty api::api-olink)
+target_link_libraries(olink_multi_server api::api-olink  api::api-implementation)
 
