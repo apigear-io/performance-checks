@@ -28,7 +28,9 @@ int main(int argc, char* argv[])
         messages_number = strtol(argv[1], &p, 10);
     }
 
-    OLinkHandlerForTest olinkProtocolHandler;
+    auto portNumber = 8000;
+    auto hostAddress = "127.0.0.1";
+    OLinkHandlerForTest olinkProtocolHandler(hostAddress, portNumber);
 
     FloatPropertySetter setter;
     auto testData = getTestData<PropertyFloatTestData, FloatPropertySetter>(setter);

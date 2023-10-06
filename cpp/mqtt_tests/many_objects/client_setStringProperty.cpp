@@ -1,18 +1,15 @@
 #include "../../scenario_templates/many_objects/executeTestFunction.h"
-#include "../helpers/olink_network_protocol_handler_for_test.hpp"
-#include "../helpers/inspected_sink.h"
+#include "../helpers/mqtt_network_protocol_handler_for_test.hpp"
+#include "../helpers/itestsink.h"
 #include "../helpers/prepare_test_data.h"
 
 #include <memory>
-#include <string>
-
-#include <iostream>
 
 
 struct PropertyIntTestData
 {
 public:
-    std::shared_ptr<InspectedSink> sink;
+    std::shared_ptr<ITestSink> sink;
     std::function<void(int)> testFunction;
 };
 
@@ -39,6 +36,7 @@ public:
 
 int main(int argc, char* argv[])
 {
+    std::vector<uint16_t> timePerMessage;
     auto messages_number = 1000u;
     if (argc > 1)
     {
@@ -46,14 +44,13 @@ int main(int argc, char* argv[])
         messages_number = strtol(argv[1], &p, 10);
     }
 
-    auto portNumber = 8000;
-    auto hostAddress = "127.0.0.1";
-    OLinkHandlerForTest olinkProtocolHandler(hostAddress, portNumber);
+
+    std::string brokerUrl = "tcp://localhost:1883";
+    MqttHandlerForTest networkProtocolHandler(brokerUrl);
+
     StringPropertySetter setter(messages_number);
-    auto testData = getTestData<PropertyIntTestData, StringPropertySetter>(setter);
+    auto testData = getTestData<PropertyIntTestData, StringPropertySetter>(setter, networkProtocolHandler.getClient());
 
-    executeTestFunction(testData, olinkProtocolHandler, messages_number);
-
-    return 0;
-
+    executeTestFunction(testData, networkProtocolHandler, messages_number);
+    networkProtocolHandler.getClient()->disconnect();
 }

@@ -1,7 +1,6 @@
 #include <memory>
 #include <chrono>
 #include <iostream>
-#include <algorithm>
 #include <future>
 #include <vector>
 
@@ -21,9 +20,7 @@ Use disconnectObjects function (networkProtocolHandler) to properly close connec
 template <class TestData, class NetworkProtocolHandler>
 void executeTestFunction(std::vector<TestData>& testData, NetworkProtocolHandler& networkProtocolHandler, uint32_t execute_times)
 {
-    auto portNumber = 8000;
-    auto hostAddress = "127.0.0.1";
-    networkProtocolHandler.prepareConnection(hostAddress, portNumber);
+    networkProtocolHandler.prepareConnection();
 
     networkProtocolHandler.connectObjects(testData);
 

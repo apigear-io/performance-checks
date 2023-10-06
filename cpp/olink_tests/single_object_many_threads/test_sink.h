@@ -8,8 +8,19 @@ class TestSink : public Cpp::Api::olink::TestApi0Client
 {
 public:
     void olinkOnPropertyChanged(const std::string& propertyId, const nlohmann::json& value) override {
-        propertyChangedTimes++;
+        m_propertyChangedTimes++;
         Cpp::Api::olink::TestApi0Client::olinkOnPropertyChanged(propertyId, value);
     }
-    uint32_t propertyChangedTimes = 0;
+
+    uint32_t propertyChangedTimes() const
+    {
+        return m_propertyChangedTimes;
+    }
+    const std::string& objectName() const
+    {
+        static auto name = "MqttObject0";
+        return name;
+    }
+private:
+    uint32_t m_propertyChangedTimes = 0;
 };
