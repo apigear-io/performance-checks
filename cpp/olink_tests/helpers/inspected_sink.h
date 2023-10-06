@@ -32,7 +32,7 @@ public:
 
     void olinkOnPropertyChanged(const std::string& propertyId, const nlohmann::json& value) override
     {
-        propertyChangedTimes++;
+        m_propertyChangedTimes++;
         m_sink->olinkOnPropertyChanged(propertyId, value);
     }
 
@@ -42,7 +42,7 @@ public:
         initReceived = true;
     }
     
-    void olinkOnRelease()
+    void olinkOnRelease() override
     {
         released = true;
         m_sink->olinkOnRelease();
@@ -52,8 +52,14 @@ public:
     {
         return initReceived;
     }
+    
+    uint32_t propertyChangedTimes() const
+    {
+        return m_propertyChangedTimes;
+    }
 
-    uint32_t propertyChangedTimes = 0;
+private:
+    uint32_t m_propertyChangedTimes = 0;
     uint32_t signalEmittedTimes = 0;
     bool initReceived = false;
     bool released = false;

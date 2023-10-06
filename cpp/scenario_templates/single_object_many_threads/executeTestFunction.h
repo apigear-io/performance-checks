@@ -22,12 +22,9 @@ Use disconnectObjects function (networkProtocolHandler) to properly close connec
 template <class TestData, class NetworkProtocolHandler>
 void executeTestFunction(TestData& testObject, NetworkProtocolHandler& networkProtocolHandler, uint32_t execute_times, uint32_t threadCount)
 {
-    auto portNumber = 8000;
-    auto hostAddress = "127.0.0.1";
-    networkProtocolHandler.prepareConnection(hostAddress, portNumber);
+    networkProtocolHandler.prepareConnection();
 
-    std::vector<TestData> testData = { testObject };
-    networkProtocolHandler.connectObjects(testData);
+    networkProtocolHandler.connectObjects(testObject);
 
     networkProtocolHandler.waitUntilObjectConnected(testObject);
 
@@ -50,8 +47,8 @@ void executeTestFunction(TestData& testObject, NetworkProtocolHandler& networkPr
     {
         task.wait();
     }
-    networkProtocolHandler.waitForReturnMessages(testData, execute_times * threadCount);
-    networkProtocolHandler.disconnectObjects(testData);
+    networkProtocolHandler.waitForReturnMessages(testObject, execute_times * threadCount);
+    networkProtocolHandler.disconnectObjects(testObject);
 
     auto end = std::chrono::high_resolution_clock::now();
 

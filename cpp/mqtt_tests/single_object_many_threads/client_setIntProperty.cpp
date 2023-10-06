@@ -1,8 +1,7 @@
 #include "../helpers/itestsink.h"
-#include "api/mqtt/mqtttestapi0.h"
+#include "api/generated/mqtt/testapi0client.h"
 #include "../../scenario_templates/single_object_many_threads/executeTestFunction.h"
 #include "../helpers/mqtt_network_protocol_handler_for_test.hpp"
-#include <QtCore>
 
 #include <memory>
 
@@ -10,9 +9,9 @@
 class PropertyIntTestData
 {
 public:
-    PropertyIntTestData(ApiGear::Mqtt::Client& client)
+    PropertyIntTestData(std::shared_ptr<ApiGear::MQTT::Client> client)
     {
-        auto obj =  std::make_shared<TestSink<api::MqttTestApi0,api::AbstractTestApi0>>(client);
+        auto obj =  std::make_shared<TestSink<Cpp::Api::MQTT::TestApi0Client>>(client);
         m_testFunction = [obj](uint32_t value)
         {
         // Add one, to avoid setting property to 0 as first call, 0 is default property and it won't be set for same value.
@@ -38,9 +37,8 @@ You can play around with running this program with different messages number and
 */
 int main(int argc, char* argv[])
 {
-    QCoreApplication app(argc, argv);
     auto sendThreadNumber = 100u;
-    auto messages_number = 500u;
+    auto messages_number = 10u;
     if (argc > 1)
     {
         char* p;
@@ -52,13 +50,11 @@ int main(int argc, char* argv[])
         sendThreadNumber = strtol(argv[2], &p, 10);
     }
 
-    quint16 portNumber = 1883;
-    QString address = "localhost";
-    MqttHandlerForTest networkProtocolHandler(address, portNumber);
+    std::string brokerUrl = "tcp://localhost:1883";
+    MqttHandlerForTest networkProtocolHandler(brokerUrl);
 
     PropertyIntTestData testObject(networkProtocolHandler.getClient());
-    auto clientThread = executeTestFunction(testObject, networkProtocolHandler, messages_number, sendThreadNumber);
-
-    return app.exec();
+    executeTestFunction(testObject, networkProtocolHandler, messages_number, sendThreadNumber);
+    networkProtocolHandler.getClient()->disconnect();
 }
 
