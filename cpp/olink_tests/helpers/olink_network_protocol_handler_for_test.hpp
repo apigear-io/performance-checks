@@ -5,6 +5,7 @@
 #include "apigear/olink/olinkconnection.h"
 #include <vector>
 #include <string>
+#include <iostream>
 #include <memory>
 
 
@@ -69,6 +70,7 @@ public:
             }
             allMessagesReceived = serviceWithAllMessages == testData.size();
         }
+        std::cout << "All messages received: " + std::to_string(messages_number) << std::endl;
     }
 
 
@@ -80,6 +82,7 @@ public:
         {
             allMessagesReceived = testData.sink->propertyChangedTimes() == messages_number;
         }
+        std::cout << "All messages received: " + std::to_string(messages_number) << std::endl;
     }
 
     template<class TestData>

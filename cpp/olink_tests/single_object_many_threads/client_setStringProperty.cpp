@@ -1,4 +1,5 @@
-#include "test_sink.h"
+#include "../helpers/inspected_sink.h"
+#include "api/generated/olink/testapi0client.h"
 
 #include "../helpers/olink_network_protocol_handler_for_test.hpp"
 #include "../../scenario_templates/single_object_many_threads/executeTestFunction.h"
@@ -9,16 +10,16 @@
 struct PropertyStringTestData
 {
 public:
-    std::shared_ptr<TestSink> sink;
     void testFunction(uint32_t number)
     {
-        sink->setPropString(messagesToSend[number]);
+        olinkClient->setPropString(messagesToSend[number]);
     }
 
 
     PropertyStringTestData(uint32_t messages_number, uint32_t sendThreadNumber)
     {
-        sink = std::make_shared<TestSink>();
+        olinkClient = std::make_shared<Cpp::Api::olink::TestApi0Client>();
+        sink = std::make_shared<InspectedSink>(olinkClient);
         for (int msgNo = 0u; msgNo < sendThreadNumber*(messages_number +1); msgNo++)
         {
             messagesToSend.push_back("Some longer property to be set, prepared before test for each message number to reduce allocating time in tests"
@@ -26,9 +27,11 @@ public:
         }
 
     }
+    std::shared_ptr<InspectedSink> sink;
 private:
     // Prepare messages to send before test starts not to slow down it with allocation of this many messages:
     std::vector<std::string> messagesToSend;
+    std::shared_ptr<Cpp::Api::olink::TestApi0Client> olinkClient;
 };
 
 /*
