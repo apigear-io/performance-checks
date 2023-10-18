@@ -1,4 +1,5 @@
-#include "test_sink.h"
+#include "../helpers/inspected_sink.h"
+#include "api/generated/olink/testapi0client.h"
 
 #include "../helpers/olink_network_protocol_handler_for_test.hpp"
 #include "../../scenario_templates/single_object_many_threads/executeTestFunction.h"
@@ -10,13 +11,15 @@ class PropertyIntTestData
 public:
     PropertyIntTestData()
     {
-        sink = std::make_shared<TestSink>();
+        olinkClient = std::make_shared<Cpp::Api::olink::TestApi0Client>();
+        sink = std::make_shared<InspectedSink>(olinkClient);
     }
-    std::shared_ptr<TestSink> sink;
     void testFunction(uint32_t value)
     {
-        sink->setPropInt(value + 1);
+        olinkClient->setPropInt(value + 1);
     }
+    std::shared_ptr<Cpp::Api::olink::TestApi0Client> olinkClient;
+    std::shared_ptr<InspectedSink> sink;
 };
 
 /*
