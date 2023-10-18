@@ -19,7 +19,7 @@ public:
 
     void prepareConnection()
     {
-        auto full_address = "ws://" + m_hostAddress + ":" + std::to_string(m_portNumber);
+        auto full_address = "ws://" + m_hostAddress + ":" + std::to_string(m_portNumber) + "/ws";
         m_client = std::make_unique<ApiGear::PocoImpl::OlinkConnection>(registry);
         m_client->connectToHost(Poco::URI(full_address));
     }

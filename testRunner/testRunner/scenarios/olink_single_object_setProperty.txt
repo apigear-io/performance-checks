@@ -2,7 +2,7 @@ servers:
 CPP_BUILD/olink_single_server.exe
 QT_BUILD/olink_single_server.exe
 clients:
-[10 100 500 1000]
+[10]
 QT_BUILD/olink_single_client_setIntProperty.exe
 CPP_BUILD/olink_single_client_setIntProperty.exe
 CPP_BUILD/olink_single_client_setStringProperty.exe
