@@ -94,16 +94,7 @@ jobs:
         env:
             CTEST_OUTPUT_ON_FAILURE: 1
         run: cmake -Bbuild -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=tmp && cmake --build build/ && cmake --build build/
-      - name: CHECK OUTPUT 1
-        run: |
-          ls qt/build/
-      - name: CHECK OUTPUT 2
-        run: |
-          ls qt/build/bin
-      - name: CHECK OUTPUT windows
-        if: ${{ matrix.config.os == 'windows-latest'}}
-        run: |
-          ls qt/build/bin/Debug
+
         #BUILD CPP
 
       - name: Cache conan on Windows
@@ -164,10 +155,6 @@ jobs:
         run: |
           $Env:GITHUB_WORKSPACE_UNIX = "${{ github.workspace }}" -replace "\\","/"
           cmake -Bbuild -DCMAKE_INSTALL_PREFIX=tmp -DCMAKE_MODULE_PATH="$Env:GITHUB_WORKSPACE_UNIX/deps" -DCMAKE_BUILD_TYPE=Release && cmake --build build/ --config Release && cmake --build build/ --target install --config Release
-      - name: CHECK OUTPUT windows
-        if: ${{ matrix.config.os == 'windows-latest'}}
-        run: |
-          ls cpp/build/bin/Release
       - name: Archive cpp release artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -175,12 +162,7 @@ jobs:
           path: |
             cpp/tmp
           retention-days: 5
-      - name: CHECK OUTPUT BUILD
-        run: |
-          ls cpp/build
-      - name: CHECK OUTPUT BIN
-        run: |
-          ls cpp/build/bin
+
 # Run tests
       - name: RUN scenario olink, single object, set INT and STRING Property on WINDOWS
         if: ${{ matrix.config.os == 'windows-latest'}}
