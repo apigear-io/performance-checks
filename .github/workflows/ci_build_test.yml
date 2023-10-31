@@ -32,7 +32,6 @@ jobs:
       - uses: actions/checkout@v3
         with:
           repository: apigear-io/template-qtcpp
-          ref: 'dphan/mqtt'
           path: template-qtcpp
 
       - name: create dir cpp template
@@ -40,7 +39,6 @@ jobs:
       - uses: actions/checkout@v3
         with:
           repository: apigear-io/template-cpp14
-          ref: 'dphan/fix'
           path: template-cpp14
       - name: Install Go
         uses: actions/cache@v3
