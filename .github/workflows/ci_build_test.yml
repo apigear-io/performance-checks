@@ -116,7 +116,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v3
         with:
-          python-version: '3.x'
+          python-version: '3.11'
           cache: "pip"
           cache-dependency-path: ".github/workflows/conan-requirements.txt"
       - name: Install Conan
