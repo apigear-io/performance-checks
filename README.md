@@ -44,8 +44,8 @@ OR
 
 Use test runner with test scenarios.
 The thest runner is located in "testRunner/testRunner", scenarios are under "testRunner/testRunner/scenarios".
-The test runner runs all listed executables in a scenario: servers and clients. At one time only one server with and client is run - the runnter waits till each pair finishes the work and then runs next one - all servers are run with all the clients.
-The parameter list [] next to client contains a message number to be send from single thread.
+The test runner executes all listed executables with their arguments in a scenario: servers and clients. At one time only one server with and client is run - the runnter waits till each pair finishes the work and then runs next one - all servers are run with all the clients.
+
 Have in mind that you need to make sure that executables find all the neceassry dlls (either set paths for them or just copy the dlls into the folders). Test runner produces reports in main directory.
 
 
