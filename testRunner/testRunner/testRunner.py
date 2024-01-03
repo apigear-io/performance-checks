@@ -4,19 +4,19 @@ import sys
 from subprocess import Popen, TimeoutExpired
 import subprocess
 from time import sleep
+import re
 
 TEST_TIME_SEARCH_TEXT = "Time measured:" 
 CLIENT_NUMBER_SEARCH_TEXT = "Objects number:"
 EXECUTION_NUMBER_SEARCH_TEXT = "Function execution number for each object:"
 
 
-#requires CPP_BUILD and QT_BUILD to point to output
+#requires CPP_BUILD and QT_BUILD to point to binaries
 class scenario:
-    def __init__(self, relative_file_path, cpp_build_path, qt_build_path):
+    def __init__(self, relative_file_path, cpp_build_path, qt_build_path, unreal_test_dir):
 
         self.servers = []
         self.clients = []
-        self.client_execution_parameters = []
         if not os.path.isfile(relative_file_path):
             print("Input file doesn't exist")
             return;
@@ -31,32 +31,57 @@ class scenario:
             elif line.lstrip().startswith('clients:'):
                 readingServers = False
                 readingClients = True
-            elif line.lstrip().startswith('['):
-                self.client_execution_parameters = line.strip('[').rstrip('\n').rstrip(']').split()
             elif  readingServers:
-                element = line.rstrip('\n');
-                if element.lstrip().startswith("CPP_BUILD"):
-                    element = element.strip("CPP_BUILD")
-                    element = cpp_build_path + element
-                if element.lstrip().startswith("QT_BUILD"):
-                    element = element.strip("QT_BUILD")
-                    element = qt_build_path + element
+                element = setPathsAndFormat(line, cpp_build_path, qt_build_path, unreal_test_dir)
                 self.servers.append(element)
             elif  readingClients:
-                element = line.rstrip('\n');
-                if element.lstrip().startswith("CPP_BUILD"):
-                    element = element.strip("CPP_BUILD")
-                    element = cpp_build_path + element
-                if element.lstrip().startswith("QT_BUILD"):
-                    element = element.strip("QT_BUILD")
-                    element = qt_build_path + element
+                element = setPathsAndFormat(line, cpp_build_path, qt_build_path, unreal_test_dir)
                 self.clients.append(element)
 
+def setPathsAndFormat(line, cpp_build_path, qt_build_path, unreal_test_dir):
+    element = line.rstrip('\n');
+    element.lstrip()
+    element = element.replace("CPP_BUILD", cpp_build_path);
+    element = element.replace("QT_BUILD", qt_build_path);
+    element = element.replace("UNREAL_DIR", unreal_test_dir);
+    return element;
+
+#if file with given path doesnt exist it tries to remove the .exe postfix
+def removePostfixIfNoOriginalFile(file_path):
+    if not os.path.isfile(file_path):
+        file_path = file_path.rstrip('.exe')
+    return file_path
+
+#splits with space, avoiding spaces that are in between "" characters    
+def splitClientAndArguments(client_line):
+    return re.split(r'\s+(?=[^"]*(?:"[^"]*"[^"]*)*$)', client_line)  
+
+# assumes the client file is one, which contains one of given paths to binaries
+def getFileFromClientLine(words, paths):
+    for word in words:
+        for path in paths:
+            path_index = word.find(path)
+            if path_index != -1:
+                return word
+    return ""
+
+def prepareClientProcess(client_line, paths):
+    words = splitClientAndArguments(client_line)
+    clientFile = getFileFromClientLine(words, paths).lstrip("\"").rstrip("\"")
+    clientFileNew = removePostfixIfNoOriginalFile(clientFile)
+    if (clientFileNew != clientFile):
+        words = [w.replace(clientFile, clientFileNew) for w in words]
+        clientFile = clientFileNew
+    if not os.path.isfile(clientFile):
+        print("File doesn't exist: " + clientFile)
+        return []
+    return words
 
 def main():
     scenarioPath =""
     cpp_build_path = ""
     qt_build_path = ""
+    unreal_test_dir = ""
     args = sys.argv[1:]
     if len(args) > 0:
         scenarioPath = args[0]
@@ -64,65 +89,64 @@ def main():
         cpp_build_path = args[1]
     if len(args) > 2:
         qt_build_path = args[2]
-
-    current_scenario = scenario(scenarioPath, cpp_build_path, qt_build_path);
+    if len(args) > 3:
+        unreal_test_dir = args[3]
+    
+    bin_paths = [cpp_build_path, qt_build_path, unreal_test_dir]
+    tech_mapping = {"cpp": cpp_build_path, "qt":qt_build_path, "unreal":unreal_test_dir}
+    current_scenario = scenario(scenarioPath, cpp_build_path, qt_build_path, unreal_test_dir);
 
     print(current_scenario.servers)
     print(current_scenario.clients)
     firstLine = "scenario: " + scenarioPath
     linesToWrite = [  firstLine ]
-    for parameter in current_scenario.client_execution_parameters:
-        linesToWrite.append("client parameter: "+ str(parameter))
-        for client in current_scenario.clients:
-            if not os.path.isfile(client):
-                client = client.rstrip('.exe')
-                if not os.path.isfile(client):
-                    print("Client file doesn't exist" + client)
-                    return 1
-            for server in current_scenario.servers:
-                if not os.path.isfile(server):
-                    server = server.rstrip('.exe')
-                    if not os.path.isfile(server):
-                        print("Server file doesn't exist" + server)
-                        return 1
-                p1 = subprocess.Popen(server, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-                sleep(0.4)
-                p2 = subprocess.Popen([client, parameter], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-                try:
-                    p1.wait(300)
-                    p2.wait(300)
-                except subprocess.TimeoutExpired:
-                    p1.kill()
-                    p2.kill()
-                    print("Timeout for pair")
-                    print(client)
-                    print(p2.communicate()[0].decode())
-                    print(server)
-                    print(p1.communicate()[0].decode())
-                    return 1
-				# On Linux delimeter is only \n, replacing \r\n with \n makes split work on Linux and Windows platform
-                server_outcome_lines = p1.communicate()[0].decode().replace('\r\n', '\n').split('\n')
-                client_outcome_lines = p2.communicate()[0].decode().replace('\r\n', '\n').split('\n')
-                if (len(server_outcome_lines[0]) == 0):
-                    print("someting went wrong when running test, check if your exe can be run")
-                    print("running " + server)
-                    continue
-                print("server info")
-                print(server_outcome_lines)
-                if (len(client_outcome_lines[0]) == 0):
-                    print("someting went wrong when running test, check if your exe can be run")
-                    print("running " + client)
-                    continue
-                test_info = prepareTestInfo(client_outcome_lines, server, client, scenarioPath)
-                print(test_info)
-                linesToWrite.append(test_info)
-                sleep(1)
+    for client in current_scenario.clients:
+        client_args = prepareClientProcess(client, bin_paths);
+        if len(client_args) == 0:
+            return 1
+        for server in current_scenario.servers:
+            server = removePostfixIfNoOriginalFile(server)
+            if not os.path.isfile(server):
+                print("File doesn't exist: " + server)
+                return 1
+            server_proces = subprocess.Popen(server, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            sleep(1)
+            client_proces = subprocess.Popen(client_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            try:
+                server_proces.wait(300)
+                client_proces.wait(300)
+            except subprocess.TimeoutExpired:
+                server_proces.kill()
+                client_proces.kill()
+                print("Timeout for pair: ")
+                print(client)
+                print(client_proces.communicate()[0].decode())
+                print(server)
+                print(server_proces.communicate()[0].decode())
+                return 1
+            server_outcome_lines = unify_delimeters_and_split(server_proces.communicate()[0].decode())
+            client_outcome_lines = unify_delimeters_and_split(client_proces.communicate()[0].decode())
+            if (len(server_outcome_lines[0]) == 0):
+                print("someting went wrong when running " + server + " check if your exe can be run")
+                continue
+            if (len(client_outcome_lines[0]) == 0):
+                print("someting went wrong when running " + client + ", check if your exe can be run")
+                continue
+            test_info = prepareTestInfo(client_outcome_lines, server, client, tech_mapping)
+            print(test_info)
+            print("server info: ")
+            print(server_outcome_lines)
+            linesToWrite.append(test_info)
+            sleep(2)
     scenarioPath = scenarioPath.split("/")
     resultFileName = "report_" +  scenarioPath[len(scenarioPath) -1]
     output_file = open(resultFileName,'w')
     output_file.writelines(line + '\n' for line in linesToWrite)
     return 0
 
+# On Linux delimeter is only \n, replacing \r\n with \n makes split work on Linux and Windows platform
+def unify_delimeters_and_split(lines):
+    return lines.replace('\r\n', '\n').split('\n')
 
 def getInfoFromOutput(lines, search_text):
     for line in lines:
@@ -132,10 +156,10 @@ def getInfoFromOutput(lines, search_text):
     return "0"
 
 
-def prepareTestInfo(outcome_lines, server, client, scenarioPath):
+def prepareTestInfo(outcome_lines, server, client, tech_mapping):
 
-    serverTechnology, serverName = getTechnologyAndName(server)
-    clientTechnology, clientName = getTechnologyAndName(client)
+    serverTechnology, serverName = getTechnologyAndName(server, tech_mapping)
+    clientTechnology, clientName = getTechnologyAndName(client, tech_mapping)
 
     testDuration = int(getInfoFromOutput(outcome_lines, TEST_TIME_SEARCH_TEXT).strip())
     mesagesNo = int(getInfoFromOutput(outcome_lines, EXECUTION_NUMBER_SEARCH_TEXT).strip())
@@ -147,9 +171,9 @@ def prepareTestInfo(outcome_lines, server, client, scenarioPath):
     #test_info += " | msg size: NO INFO"
     test_info = "Clients number: " + str(clientsNo)
     test_info += " | msgs per client: " + str(mesagesNo)
+    test_info += " | test time [ms]: " + str(testDuration)
     test_info += " | Tech: client " + clientTechnology
     test_info += "; server " + serverTechnology
-    test_info += " | test time [ms]: " + str(testDuration)
     #test_info += " | max time: NO INFO"
     #test_info += " | min time: NO INFO"
     #test_info += " | number of runs: NO INFO"
@@ -160,15 +184,15 @@ def prepareTestInfo(outcome_lines, server, client, scenarioPath):
     return test_info
 
 
-def getTechnologyAndName(executablePath):
-    exeInfo = executablePath.split("/");
-    exeInfo = list(filter(("..").__ne__, exeInfo))
-    exeInfo = list(filter((".").__ne__, exeInfo))
-    exeTechnology = exeInfo[0];
-    if exeTechnology.find("build-qt") != -1:
-        exeTechnology = "qt"
-    exeName = exeInfo[len(exeInfo) - 1 ]
-    return exeTechnology, exeName
+def getTechnologyAndName(executablePath, mapping):
+    for technology, path in mapping.items():
+        tech_index = executablePath.find(path)
+        if tech_index != -1:
+            end_index = executablePath.find(" ", tech_index+ len(path))
+            if end_index == -1:
+                return technology, executablePath[tech_index+ len(path) +1 : len(executablePath)]
+            return technology, executablePath[tech_index+ len(path)+1: end_index]
+    return "not identified", executablePath
 
 if __name__ == "__main__":
     main()
