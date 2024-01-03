@@ -5,15 +5,21 @@
 #include "apigear/olink/olinkconnection.h"
 #include <vector>
 #include <string>
+#include <iostream>
 #include <memory>
 
 
 class OLinkHandlerForTest
 {
 public:
-    void prepareConnection(std::string hostAddress, uint32_t portNumber)
+    OLinkHandlerForTest(std::string hostAddress, uint32_t portNumber)
+        :m_hostAddress(hostAddress),
+        m_portNumber(portNumber)
+    {}
+
+    void prepareConnection()
     {
-        auto full_address = "ws://" + hostAddress + ":" + std::to_string(portNumber);
+        auto full_address = "ws://" + m_hostAddress + ":" + std::to_string(m_portNumber) + "/ws";
         m_client = std::make_unique<ApiGear::PocoImpl::OlinkConnection>(registry);
         m_client->connectToHost(Poco::URI(full_address));
     }
@@ -28,12 +34,24 @@ public:
     }
 
     template<class TestData>
+    void connectObjects(TestData& testData)
+    {
+        m_client->connectAndLinkObject(testData.sink);
+    }
+
+    template<class TestData>
     void disconnectObjects(std::vector<TestData>& testData)
     {
         for (auto& element : testData)
         {
             m_client->disconnectAndUnlink(element.sink->olinkObjectName());
         }
+    }
+
+    template<class TestData>
+    void disconnectObjects(TestData& testData)
+    {
+        m_client->disconnectAndUnlink(testData.sink->olinkObjectName());
     }
 
     template<class TestData>
@@ -45,13 +63,26 @@ public:
             auto serviceWithAllMessages = 0u;
             for (const auto& element : testData)
             {
-                if (element.sink->propertyChangedTimes == messages_number)
+                if (element.sink->propertyChangedTimes() == messages_number)
                 {
                     serviceWithAllMessages++;
                 }
             }
             allMessagesReceived = serviceWithAllMessages == testData.size();
         }
+        std::cout << "All messages received: " + std::to_string(messages_number) << std::endl;
+    }
+
+
+    template<class TestData>
+    void waitForReturnMessages(const TestData& testData, uint32_t messages_number)
+    {
+        auto allMessagesReceived = false;
+        while (!allMessagesReceived)
+        {
+            allMessagesReceived = testData.sink->propertyChangedTimes() == messages_number;
+        }
+        std::cout << "All messages received: " + std::to_string(messages_number) << std::endl;
     }
 
     template<class TestData>
@@ -63,6 +94,8 @@ public:
         }
     }
 private:
+    std::string m_hostAddress;
+    uint32_t m_portNumber;
     ApiGear::ObjectLink::ClientRegistry registry;
     std::unique_ptr<ApiGear::PocoImpl::OlinkConnection> m_client;
 };

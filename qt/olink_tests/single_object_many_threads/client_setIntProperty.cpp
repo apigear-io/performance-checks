@@ -43,7 +43,9 @@ int main(int argc, char* argv[])
         sendThreadNumber = strtol(argv[2], &p, 10);
     }
 
-    OLinkHandlerForTest networkProtocolHandler;
+    auto portNumber = 8000;
+    auto hostAddress = "127.0.0.1";
+    OLinkHandlerForTest networkProtocolHandler(hostAddress, portNumber);
 
     auto testObject = PropertyIntTestData();
     auto clientThread = executeTestFunction(testObject, networkProtocolHandler, messages_number, sendThreadNumber);

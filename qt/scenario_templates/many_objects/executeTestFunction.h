@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <future>
 #include <QCoreApplication>
+#include <thread>
 
 /**
 Template for simple scenario. This is successful case scenario.
@@ -23,10 +24,7 @@ WARNING after test ends it quits application.
 template <class TestData, class NetworkProtocolHandler>
 std::future<void> executeTestFunction(std::vector<TestData>& testData, NetworkProtocolHandler& networkProtocolHandler, uint32_t execute_times)
 {
-
-    auto portNumber = 8000;
-    auto hostAddress = "127.0.0.1";
-    networkProtocolHandler.prepareConnection(hostAddress, portNumber);
+    networkProtocolHandler.prepareConnection();
 
 
     auto clientThread = std::async(std::launch::async,
@@ -54,6 +52,7 @@ std::future<void> executeTestFunction(std::vector<TestData>& testData, NetworkPr
             networkProtocolHandler.disconnectObjects(testData);
 
             auto end = std::chrono::high_resolution_clock::now();
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
             auto time = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
             std::cout << "Time measured: " << time.count() << std::endl;
             std::cout << "Objects number: " << testData.size() << std::endl;

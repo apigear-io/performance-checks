@@ -49,7 +49,9 @@ int main(int argc, char* argv[])
     StringPropertySetter setter(messages_number);
     auto testData = getTestData<PropertyIntTestData, StringPropertySetter>(setter);
 
-    OLinkHandlerForTest olinkProtocolHandler;
+    auto portNumber = 8000;
+    auto hostAddress = "127.0.0.1";
+    OLinkHandlerForTest olinkProtocolHandler(hostAddress, portNumber);
 
     auto clientThread = executeTestFunction(testData, olinkProtocolHandler, messages_number);
 

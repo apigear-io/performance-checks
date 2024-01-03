@@ -10,10 +10,15 @@
 class OLinkHandlerForTest
 {
 public:
-
-    void prepareConnection(std::string hostAddress, uint32_t portNumber)
+    OLinkHandlerForTest(QString hostAddress, uint32_t portNumber)
+        :host(hostAddress),
+        port(portNumber)
     {
-        auto full_address = "ws://" + hostAddress + ":" + std::to_string(portNumber) + "/ws";
+    }
+
+    void prepareConnection()
+    {
+        auto full_address = "ws://" + host.toStdString() + ":" + std::to_string(port) + "/ws";
         auto qstringAddr = QString::fromStdString(full_address);
         auto url = QUrl(qstringAddr);
         m_client = std::make_unique<ApiGear::ObjectLink::OLinkClient>(m_registry);
@@ -29,6 +34,13 @@ public:
         }
     }
 
+
+    template<class TestData>
+    void connectObjects(TestData& testData)
+    {
+        m_client->linkObjectSource(testData.sink);
+    }
+
     template<class TestData>
     void disconnectObjects(std::vector<TestData>& testData)
     {
@@ -39,7 +51,13 @@ public:
     }
 
     template<class TestData>
-    void waitForReturnMessages(const std::vector<TestData>& testData, uint32_t messages_number)
+    void disconnectObjects(TestData& testData)
+    {
+        m_client->unlinkObjectSource(testData.sink->olinkObjectName());
+    }
+
+    template<class TestData>
+    void waitForReturnMessages(std::vector<TestData>& testData, uint32_t messages_number)
     {
         auto allMessagesReceived = false;
         while (!allMessagesReceived)
@@ -57,6 +75,16 @@ public:
     }
 
     template<class TestData>
+    void waitForReturnMessages(TestData& testData, uint32_t messages_number)
+    {
+        auto allMessagesReceived = false;
+        while (!allMessagesReceived)
+        {
+            allMessagesReceived = testData.sink->propertyChangedTimes == messages_number;
+        }
+    }
+
+    template<class TestData>
     void waitUntilObjectConnected(const TestData& object)
     {
         while (!object.sink->isReady())
@@ -65,6 +93,8 @@ public:
         }
     }
 private:
+    QString host;
+    uint32_t port;
     ApiGear::ObjectLink::ClientRegistry m_registry;
     std::unique_ptr<ApiGear::ObjectLink::OLinkClient> m_client;
 };

@@ -1,0 +1,6 @@
+servers:
+CPP_BUILD/mqtt_single_server.exe
+QT_BUILD/mqtt_single_server.exe
+clients:
+CPP_BUILD/mqtt_single_client_setIntProperty.exe 10
+QT_BUILD/mqtt_single_client_setIntProperty.exe 10
