@@ -24,10 +24,10 @@ Repository content:
     -  specific technology infrastructure required to run scenario i.e  network protocol handler adapter for technology - this is used by scenarios, and the actual tests that just execute the scenarios with specific data types.
 
 The test scenario is determined with client part. Each test client is a separate scenario.
-Example scenario sets up test object and requests a property change spicified number of times in a loop from few threads (all at once in this case), then waits for the property to be set exactely that number of times. Then it finises test. 
-The server part only responds to client requests with default implementation (so only changing propetis works out of the box, for testing singals and methods some logic needs to implemented).
-The client and server part need to have agree on start and stop conditons. 
-For OLink start and stop is determined with OLink link and unlik messages (so the server stops on receiving last unlink message, the client stops after sending last unlink message - but having all the required property changes from server side first).
+Example scenario sets up test object and requests a property change specified number of times in a loop from few threads (all at once in this case), then waits for the property to be set exactly that number of times. Then it finises test. 
+The server part only responds to client requests with default implementation (so only changing properties works out of the box, for testing signals and methods some logic needs to implemented).
+The client and server part need to have agree on start and stop conditions. 
+For OLink start and stop is determined with OLink link and unlink messages (so the server stops on receiving last unlink message, the client stops after sending last unlink message - but having all the required property changes from server side first).
 The Mqtt tests are using extra message send by client.
 
 ## Running tests locally
@@ -44,7 +44,7 @@ OR
 
 Use test runner with test scenarios.
 The test runner is located in "testRunner/testRunner", scenarios are under "testRunner/testRunner/scenarios".
-The test runner executes all listed executables with their arguments in a scenario: servers and clients. At one time only one server with and client is run - the runnter waits till each pair finishes the work and then runs next one - all servers are run with all the clients.
+The test runner executes all listed executables with their arguments in a scenario: servers and clients. At one time only one server with and client is run - the runner waits till each pair finishes the work and then runs next one - all servers are run with all the clients.
 
 Running a test runner from a root of this repository:
 on windows:
@@ -52,7 +52,7 @@ py testRunner/testRunner/testRunner.py "testRunner/testRunner/scenarios/olink_si
 unix:
 python testRunner/testRunner/testRunner.py "testRunner/testRunner/scenarios/olink_single_object_setProperty.txt" "relative-path-to-cpp-executables-used-by-scenario" "relative-path-to-qt-executables-used-by-scenario"
 
-Have in mind that you need to make sure that executables find all the neceassry dlls (either set paths for them or just copy the dlls into the folders). Test runner produces reports in main directory.
+Have in mind that you need to make sure that executables find all the necessary dlls (either set paths for them or just copy the dlls into the folders). Test runner produces reports in main directory.
 
 
 ### Changing an API
