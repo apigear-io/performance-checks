@@ -18,7 +18,6 @@ void Aunreal_testsGameModeBase::InitGame(const FString& MapName, const FString& 
 
     
     UWorld* world = GetWorld();
-    std::cout << "About to wait for loading" << std::endl;
     FAssetCompilingManager::Get().FinishAllCompilation();
     bIsAllAlreadyLoaded = true;
     if (bShouldExecuteTest)

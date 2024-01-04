@@ -19,7 +19,7 @@ class UNREAL_TESTS_API UCounter : public UObject
 public:
 
     UFUNCTION()
-	void increase(int notUsedPsrameter)
+	void increaseInt(int notUsedPsrameter)
     {
         counter++;
         if (counter >= Threshold)
@@ -29,6 +29,15 @@ public:
     }
     UFUNCTION()
     void increaseString(const FString& notUsedPsrameter)
+    {
+        counter++;
+        if (counter >= Threshold)
+        {
+            OnThresholdReached.Broadcast();
+        }
+    }
+    UFUNCTION()
+    void increaseFloat(const float notUsedPsrameter)
     {
         counter++;
         if (counter >= Threshold)

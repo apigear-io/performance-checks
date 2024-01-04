@@ -5,11 +5,15 @@
 #include <chrono>
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include <vector>
+#include <functional>
+
 #include "SingleObjectTest.generated.h"
 
 /**
  * 
  */
+
 UCLASS(BlueprintType, config = Game)
 class UNREAL_TESTS_API USingleObjectTest : public UObject
 {
@@ -28,6 +32,11 @@ public:
 	int ThreadCount = 100;
 	UPROPERTY(Config)
 	int RequestsPerThread = 1000;
+	UPROPERTY(Config)
+	int TestPropertyType = 0;
 private:
 	std::chrono::time_point<std::chrono::high_resolution_clock> begin;
+	std::vector<FString> messagesToSend;
+	std::function<void(int)> setPropertyExecution;
+	
 };
