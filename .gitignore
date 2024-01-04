@@ -10,13 +10,51 @@ coverage/
 tsconfig.tsbuildinfo
 demo/
 **/.vs/*
+.vscode
+.vsconfig
+*.code-workspace
+*.sln
+*.DS_Store
+
 
 # do not generated files, CI generates it for itself
-cpp/testApi/*
-qt/testApi/*
+**/testApi/*
+unreal_tests/Plugins/Api/*
+unreal_tests/Plugins/ApiGear/*
+unreal_tests/buildPlugins.*
 
 # do not add build folders
-build*/
+**/Build*/**/*
+**/build*/
+**/Intermediate/
+**/Binaries/
+**/Saved/
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
 
 # cross plattform line breaks shall be ignored
 * text=auto eol=lf
@@ -29,3 +67,39 @@ build*/
 tmp/
 testbed-apis/
 bin/
+
+
+####### unreal
+# Prerequisites
+*.d
+
+# Fortran module files
+*.mod
+*.smod
+
+# platform builds
+unreal_tests/Platforms/*
+
+# Only allow .uasset and .umap files from /Content dir.
+# They're tracked by git-lfs, don't forget to track other
+# files if adding them here.
+!unreal_tests/Content/**/*.uasset
+!unreal_tests/Content/**/*.umap
+
+# Allow any files from /RawContent dir.
+# Any file in /RawContent dir will be managed by git lfs.
+!unreal_tests/RawContent/**/*
+
+# Do not ignore git files in the root of the repo.
+!unreal_tests/.git*
+
+# Do not ignore current project's `.uproject`.
+!unreal_tests/*.uproject
+
+# Do not ignore source, config and plugins dirs.
+!unreal_tests/Source/**
+!unreal_tests/Config/**
+
+
+
+

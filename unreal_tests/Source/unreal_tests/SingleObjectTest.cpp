@@ -17,8 +17,7 @@
 
 void USingleObjectTest::Execute()
 {
-
-    auto gameInstance = UGameplayStatics::GetGameInstance(GetWorld());
+   auto gameInstance = UGameplayStatics::GetGameInstance(GetWorld());
     UApiTestApi0OLinkClient* clientApi0 = gameInstance->GetSubsystem<UApiTestApi0OLinkClient>();
     if (!clientApi0->_IsSubscribed())
     {
@@ -29,7 +28,40 @@ void USingleObjectTest::Execute()
     auto messages_number = ThreadCount * RequestsPerThread;
     propertyChangeCounter->Threshold = messages_number;
 
-    clientApi0->_GetSignals_Implementation()->OnPropIntChanged.AddDynamic(propertyChangeCounter, &UCounter::increase);
+    for (int msgNo = 0u; msgNo < ThreadCount * (RequestsPerThread + 1); msgNo++)
+    {
+        auto message = FString(std::string("Some longer property to be set, prepared before test for each message number to reduce allocating time in tests" + std::to_string(msgNo)).c_str());
+        messagesToSend.push_back(message);
+    }
+
+    if (TestPropertyType == 1)
+    {
+        std::cout << "Test for string property" << std::endl;
+        setPropertyExecution = [&clientApi0, this](int number)
+        {
+            clientApi0->Execute_SetPropString(clientApi0, messagesToSend[number]);
+        };
+    }
+    else if (TestPropertyType == 2)
+    {
+        std::cout << "Test for float property" << std::endl;
+        setPropertyExecution = [&clientApi0](int number)
+        {
+            clientApi0->Execute_SetPropFloat(clientApi0, number + 1.0f + number/1000.0f);
+        };
+    }
+    else
+    {
+        std::cout << "Test for int property" << std::endl;
+        setPropertyExecution = [&clientApi0](int number)
+        {
+            clientApi0->Execute_SetPropInt(clientApi0, number +1);
+        };
+    }
+
+    clientApi0->_GetSignals_Implementation()->OnPropIntChanged.AddDynamic(propertyChangeCounter, &UCounter::increaseInt);
+    clientApi0->_GetSignals_Implementation()->OnPropFloatChanged.AddDynamic(propertyChangeCounter, &UCounter::increaseFloat);
+    clientApi0->_GetSignals_Implementation()->OnPropStringChanged.AddDynamic(propertyChangeCounter, &UCounter::increaseString);
     propertyChangeCounter->OnThresholdReached.AddDynamic(this, &USingleObjectTest::FinishTest);
 
     std::vector<std::shared_future<void>> tasks;
@@ -42,8 +74,9 @@ void USingleObjectTest::Execute()
 
                 for (auto i = 0; i < RequestsPerThread; i++)
                 {
-                    auto number = threadNo * RequestsPerThread + i + 1;
-                    clientApi0->Execute_SetPropInt(clientApi0, number);
+                    auto number = threadNo * RequestsPerThread + i;
+                    setPropertyExecution(number);
+                    //clientApi0->Execute_SetPropInt(clientApi0, number+1);
                 }
             });
         tasks.push_back(sendMessagesTask.share());
@@ -71,7 +104,9 @@ void USingleObjectTest::FinishTest()
     auto gameInstance = UGameplayStatics::GetGameInstance(GetWorld());
     UApiTestApi0OLinkClient* clientApi0 = gameInstance->GetSubsystem<UApiTestApi0OLinkClient>();
     
-    clientApi0->_GetSignals_Implementation()->OnPropIntChanged.RemoveDynamic(propertyChangeCounter, &UCounter::increase);
+    clientApi0->_GetSignals_Implementation()->OnPropIntChanged.RemoveDynamic(propertyChangeCounter, &UCounter::increaseInt);
+    clientApi0->_GetSignals_Implementation()->OnPropFloatChanged.RemoveDynamic(propertyChangeCounter, &UCounter::increaseFloat);
+    clientApi0->_GetSignals_Implementation()->OnPropStringChanged.RemoveDynamic(propertyChangeCounter, &UCounter::increaseString);
     propertyChangeCounter->OnThresholdReached.RemoveDynamic(this, &USingleObjectTest::FinishTest);
 
     UKismetSystemLibrary::QuitGame(GetWorld(), nullptr, EQuitPreference::Quit, true);
