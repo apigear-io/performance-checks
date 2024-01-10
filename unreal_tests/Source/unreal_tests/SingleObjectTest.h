@@ -10,9 +10,6 @@
 
 #include "SingleObjectTest.generated.h"
 
-/**
- * 
- */
 
 UCLASS(BlueprintType, config = Game)
 class UNREAL_TESTS_API USingleObjectTest : public UObject
@@ -32,6 +29,11 @@ public:
 	int ThreadCount = 100;
 	UPROPERTY(Config)
 	int RequestsPerThread = 1000;
+/*
+ * TestPropertyType 0 -> test setting int property
+ * TestPropertyType 1 -> test setting string property
+ * TestPropertyType 2 -> test setting float property
+ */
 	UPROPERTY(Config)
 	int TestPropertyType = 0;
 private:
