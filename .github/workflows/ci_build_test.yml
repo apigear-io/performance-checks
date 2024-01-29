@@ -52,7 +52,7 @@ jobs:
       - name: Generate APIs
         run: go run main.go install
       - run: go run main.go generateAPI
-      #QT BUILD, skip for now to get cpp result faster
+      #QT BUILD
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
         with:
@@ -143,7 +143,7 @@ jobs:
       - name: cpp api and tests build for Linux/Mac
         if: ${{ matrix.config.os != 'windows-latest'}}
         working-directory: cpp
-        run: cmake -Bbuild -DCMAKE_INSTALL_PREFIX=tmp -DCMAKE_MODULE_PATH=$GITHUB_WORKSPACE/deps -DCMAKE_BUILD_TYPE=Release && cmake --build build/ --config Release && cmake --build build/ --target install --config Release
+        run: cmake -Bbuild -DCMAKE_INSTALL_PREFIX=tmp -DCMAKE_MODULE_PATH=$GITHUB_WORKSPACE/deps -DCMAKE_BUILD_TYPE=Release -DAPIGEAR_FETCH_OLINKCORE=ON -DCPP_FETCH_DEPS=ON && cmake --build build/ --config Release  && cmake --build build/ --target install --config Release
       - name: Update path env on Windows for testing
         if: ${{ matrix.config.os == 'windows-latest'}}
         run: echo "$GITHUB_WORKSPACE/cpp/build/bin/Release/" >> $GITHUB_PATH
@@ -152,7 +152,7 @@ jobs:
         working-directory: cpp
         run: |
           $Env:GITHUB_WORKSPACE_UNIX = "${{ github.workspace }}" -replace "\\","/"
-          cmake -Bbuild -DCMAKE_INSTALL_PREFIX=tmp -DCMAKE_MODULE_PATH="$Env:GITHUB_WORKSPACE_UNIX/deps" -DCMAKE_BUILD_TYPE=Release && cmake --build build/ --config Release && cmake --build build/ --target install --config Release
+          cmake -Bbuild -DCMAKE_INSTALL_PREFIX=tmp -DCMAKE_MODULE_PATH="$Env:GITHUB_WORKSPACE_UNIX/deps" -DCMAKE_BUILD_TYPE=Release -DAPIGEAR_FETCH_OLINKCORE=ON -DCPP_FETCH_DEPS=ON && cmake --build build/ --config Release && cmake --build build/ --target install --config Release     
       - name: Archive cpp release artifacts
         uses: actions/upload-artifact@v3
         with:
