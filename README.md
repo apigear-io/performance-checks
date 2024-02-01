@@ -62,3 +62,8 @@ In case the sinks and sources need to be regenerated please do following:
 2. Use The `performance\apigear\GenerateIdl.py' to generate `performance\apigear\performance_interface100.module.yaml` which contains this api generated 100 times with a number added to the name.
 3. Make sure the solution file `performance\apigear\performance.solution.yaml` generates the olink and stubs feature and it uses template-cpp14 and regenerate the api
 
+OBJECT LINK CORE ONLY TESTS
+
+Tests created without the network layer. They connect client's write function with server's handle message, and server's write function with client's handle message.
+The are added for cpp template for now.
+They can be run just by starting a test target. It contains both server and client side in one app, as no network is required.
