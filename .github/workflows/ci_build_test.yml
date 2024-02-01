@@ -162,6 +162,19 @@ jobs:
           retention-days: 5
 
 # Run tests
+      - name: RUN olink core no network syncIntMethodCall test WINDOWS
+        if: ${{ matrix.config.os == 'windows-latest'}}
+        run: ./cpp/build/bin/Release/olink_core_no_network_single_object_syncIntMethodCall.exe
+      - name:  RUN olink core no network syncIntMethodCall test linux/mac
+        if: ${{ matrix.config.os != 'windows-latest'}}
+        run: ./cpp/build/bin/olink_core_no_network_single_object_syncIntMethodCall
+      - name: RUN olink core no network setIntProperty test WINDOWS
+        if: ${{ matrix.config.os == 'windows-latest'}}
+        run: ./cpp/build/bin/Release/olink_core_no_network_single_object_setIntProperty..exe
+      - name:  RUN olink core no network setIntProperty test linux/mac
+        if: ${{ matrix.config.os != 'windows-latest'}}
+        run: ./cpp/build/bin/olink_core_no_network_single_object_setIntProperty.
+
       - name: RUN scenario olink, single object, set INT and STRING Property on WINDOWS
         if: ${{ matrix.config.os == 'windows-latest'}}
         run: py testRunner/testRunner/testRunner.py "testRunner/testRunner/scenarios/olink_single_object_setProperty.txt" "./cpp/build/bin/Release" "./qt/build/bin/Debug" -RunAsAdmin
