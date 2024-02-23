@@ -11,7 +11,7 @@ struct PropertyIntTestData
 public:
     bool allResponsesReceived (uint32_t sentRequestsNumber) const
     {
-        return sink->propertyChangedTimes() == sentRequestsNumber;
+        return sink->propertyChangedTimes == sentRequestsNumber;
     }
     std::shared_ptr<InspectedSink> sink;
     std::function<void(int)> testFunction;
