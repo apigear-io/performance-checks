@@ -10,10 +10,16 @@ find_package(api COMPONENTS  api_impl api_olink)
 set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin )
 
 
-add_executable(olink_single_client_setIntProperty "client_setIntProperty.cpp")
+add_executable(olink_single_client_setIntProperty "client_setIntProperty.cpp" "../helpers/latency_helper.cpp")
+add_executable(olink_single_client_setIntPropertySync "client_setIntPropertySync.cpp"  "../helpers/latency_helper.cpp")
+add_executable(olink_single_client_syncMethodInt "client_syncMethodInt.cpp" "../helpers/methodpropertyinttestdata.cpp"  "../helpers/latency_helper.cpp")
+add_executable(olink_single_client_asyncMethodInt "client_asyncMethodInt.cpp" "../helpers/methodpropertyinttestdata.cpp" "../helpers/latency_helper.cpp")
 add_executable(olink_single_client_setStringProperty "client_setStringProperty.cpp" )
 add_executable(olink_single_server "server.cpp" )
 
 target_link_libraries(olink_single_server api_olink api::api_impl)
 target_link_libraries(olink_single_client_setIntProperty api_olink)
+target_link_libraries(olink_single_client_setIntPropertySync api_olink)
+target_link_libraries(olink_single_client_syncMethodInt api_olink)
+target_link_libraries(olink_single_client_asyncMethodInt api_olink)
 target_link_libraries(olink_single_client_setStringProperty api_olink)

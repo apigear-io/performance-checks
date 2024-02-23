@@ -11,7 +11,7 @@ public:
     std::function<void(int)> testFunction;
     bool allResponsesReceived (uint32_t sentRequestsNumber) const
     {
-        return sink->propertyChangedTimes() == sentRequestsNumber;
+        return sink->propertyChangedTimes == sentRequestsNumber;
     }
 };
 

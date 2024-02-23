@@ -65,7 +65,7 @@ public:
             auto serviceWithAllMessages = 0u;
             for (const auto& element : testData)
             {
-                if (element.sink->allResponsesReceived(messages_number))
+                if (element.allResponsesReceived(messages_number))
                 {
                     serviceWithAllMessages++;
                 }

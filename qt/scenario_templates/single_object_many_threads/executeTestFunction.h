@@ -5,6 +5,7 @@
 #include <future>
 #include <QCoreApplication>
 #include <thread>
+#include <QTimer>
 
 /**
 Template for simple scenario. This is successful case scenario.
@@ -23,14 +24,12 @@ Use disconnectObjects function (networkProtocolHandler) to properly close connec
 WARNING after test ends it quits application.
 */
 template <class TestData, class NetworkProtocolHandler>
-std::future<void> executeTestFunction(TestData& testObject, NetworkProtocolHandler& networkProtocolHandler, uint32_t execute_times, uint32_t threadCount)
+std::future<void> executeTestFunction(TestData& testObject, NetworkProtocolHandler& networkProtocolHandler, uint32_t execute_times, uint32_t threadCount, std::function<void(void)> onFinished = nullptr)
 {
 
     networkProtocolHandler.prepareConnection();
-
     auto clientThread = std::async(std::launch::async,
-        [threadCount, execute_times, &testObject, &networkProtocolHandler](){
-
+        [threadCount, execute_times, &testObject, &networkProtocolHandler, onFinished](){
 
         std::vector<std::shared_future<void>> tasks;
         auto begin = std::chrono::high_resolution_clock::now();
@@ -44,7 +43,7 @@ std::future<void> executeTestFunction(TestData& testObject, NetworkProtocolHandl
                 [&testObject, execute_times, &tasks, threadNo]() {
                 for (auto i = 0u; i < execute_times; i++)
                 {
-                    testObject.testFunction(threadNo * execute_times + i);
+                   testObject.testFunction(threadNo * execute_times + i);
                 }
                 });
             tasks.push_back(sendMessagesTask.share());
@@ -63,6 +62,11 @@ std::future<void> executeTestFunction(TestData& testObject, NetworkProtocolHandl
         std::cout << "Time measured: " << time.count() << std::endl;
         std::cout << "Objects number: 1" << std::endl;
         std::cout << "Function execution number for each object: " << threadCount * execute_times << std::endl;
+
+        if (onFinished)
+        {
+            onFinished();
+        }
         QCoreApplication::quit();
     });
     return clientThread;

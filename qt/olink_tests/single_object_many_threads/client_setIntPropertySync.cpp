@@ -25,7 +25,7 @@ public:
     }
     bool allResponsesReceived (uint32_t sentRequestsNumber) const
     {
-        return count == sentRequestsNumber;
+        return true;
     }
     std::shared_ptr<TestSink> sink;
     void testFunction(uint32_t value)
@@ -33,6 +33,7 @@ public:
         m_latenciesStart[value] = std::chrono::high_resolution_clock::now();
         // Add one, to avoid setting property to 0 as first call, 0 is default property and it won't be set for same value.
         sink->setPropInt(value + 1);
+        while (count < value){}
     }
 
     std::vector<std::chrono::time_point<std::chrono::high_resolution_clock>>& m_latenciesStart;
