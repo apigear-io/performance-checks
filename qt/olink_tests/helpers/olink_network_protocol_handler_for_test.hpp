@@ -65,7 +65,7 @@ public:
             auto serviceWithAllMessages = 0u;
             for (const auto& element : testData)
             {
-                if (element.sink->propertyChangedTimes == messages_number)
+                if (element.sink->allResponsesReceived(messages_number))
                 {
                     serviceWithAllMessages++;
                 }
@@ -80,7 +80,7 @@ public:
         auto allMessagesReceived = false;
         while (!allMessagesReceived)
         {
-            allMessagesReceived = testData.sink->propertyChangedTimes == messages_number;
+            allMessagesReceived = testData.allResponsesReceived(messages_number);
         }
     }
 

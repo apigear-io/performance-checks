@@ -6,12 +6,6 @@
 struct PropertyStringTestData
 {
 public:
-    std::shared_ptr<TestSink> sink;
-    void testFunction(uint32_t number)
-    {
-        sink->setPropString(messagesToSend[number]);
-    }
-
     PropertyStringTestData(uint32_t messages_number, uint32_t sendThreadNumber)
     {
         sink = std::make_shared<TestSink>();
@@ -20,11 +14,26 @@ public:
             auto message = "Some longer property to be set, prepared before test for each message number to reduce allocating time in tests"+ std::to_string(msgNo);
             messagesToSend.push_back(QString::fromStdString(message));
         }
+        sink->connect(sink.get(), &api::AbstractTestApi0::propStringChanged, [this](auto /*prop*/)
+                      {
+                          count++;
+                      });
 
     }
+    void testFunction(uint32_t number)
+    {
+        sink->setPropString(messagesToSend[number]);
+    }
+    bool allResponsesReceived (uint32_t sentRequestsNumber) const
+    {
+        return count == sentRequestsNumber;
+    }
+
+    std::shared_ptr<TestSink> sink;
 private:
     // Prepare different messages to send before test starts not to slow down it with allocation of this many messages:
     std::vector<QString> messagesToSend;
+    std::atomic<uint32_t> count{0};
 };
 
 /*
