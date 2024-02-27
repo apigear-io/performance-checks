@@ -99,7 +99,9 @@ def main():
     print(current_scenario.servers)
     print(current_scenario.clients)
     firstLine = "scenario: " + scenarioPath
-    linesToWrite = [  firstLine ]
+    linesToWriteResult = [  firstLine ]
+    linesToWriteCsv = [  firstLine ]
+    linesToWriteCsv.append(get_csv_header())
     for client in current_scenario.clients:
         client_args = prepareClientProcess(client, bin_paths);
         if len(client_args) == 0:
@@ -133,15 +135,17 @@ def main():
                 print("someting went wrong when running " + client + ", check if your exe can be run")
                 continue
             test_info = prepareTestInfo(client_outcome_lines, server, client, tech_mapping)
-            print(test_info)
-            print("server info: ")
-            print(server_outcome_lines)
-            linesToWrite.append(test_info)
+            formated_line = format_for_output(test_info)
+            print(formated_line)
+            linesToWriteResult.append(formated_line)
+            linesToWriteCsv.append(format_to_csv(test_info))
             sleep(2)
     scenarioPath = scenarioPath.split("/")
     resultFileName = "report_" +  scenarioPath[len(scenarioPath) -1]
-    output_file = open(resultFileName,'w')
-    output_file.writelines(line + '\n' for line in linesToWrite)
+    report_file = open(resultFileName,'w')
+    report_file.writelines(line + '\n' for line in linesToWriteResult)
+    csv_report = open("csv_"+resultFileName,'w')
+    csv_report.writelines(line + '\n' for line in linesToWriteCsv)
     return 0
 
 # On Linux delimeter is only \n, replacing \r\n with \n makes split work on Linux and Windows platform
@@ -155,6 +159,32 @@ def getInfoFromOutput(lines, search_text):
             return outcome[1]
     return "0"
 
+def getLatencies(lines):
+    for line in lines:
+        if line.startswith("Latency"):
+            outcome = line.split(' ')
+            if len(outcome) > 6:
+                return True, outcome[2], outcome[4], outcome[6],
+    return False, -1, -1, -1 
+
+def format_for_output(test_info):
+    output =   "client " + test_info["client"] 
+    output+= " server " + test_info["server"]
+    output+= " requests number " + str(test_info["requests"])
+    output+= " total time[ms] " +  str(test_info["total time"])
+    output+= " queries per ms " + str(round(test_info["queries per millisec"]*1000, 2))
+    output+= " latency[us]: mean " +  str(test_info["latency mean"])
+    output+= " max " + str(test_info["latency max"])
+    output+= " min " +  str(test_info["latency min"])
+    output+= " client exe  " + test_info["clientName"]
+    output+= " server exe " + test_info["serverName"]
+    return output
+
+def get_csv_header():
+    return "client tech, server tech, requests number, total time[ms], queries per millisec, latency mean[us], latency max[us], latency min[us]"
+
+def format_to_csv(test_info):
+    return test_info["client"] + "," + test_info["server"] + "," + str(test_info["requests"]) + "," + str(test_info["total time"]) + "," + str(test_info["queries per millisec"]) + "," + str(test_info["latency mean"]) + "," + str(test_info["latency max"]) + "," + str(test_info["latency min"])
 
 def prepareTestInfo(outcome_lines, server, client, tech_mapping):
 
@@ -164,24 +194,24 @@ def prepareTestInfo(outcome_lines, server, client, tech_mapping):
     testDuration = int(getInfoFromOutput(outcome_lines, TEST_TIME_SEARCH_TEXT).strip())
     mesagesNo = int(getInfoFromOutput(outcome_lines, EXECUTION_NUMBER_SEARCH_TEXT).strip())
     clientsNo = int(getInfoFromOutput(outcome_lines, CLIENT_NUMBER_SEARCH_TEXT).strip())
-    
-    #no msg size info from test!
-    #Time measured: 1025', 'Objects number: 1', 'Function execution number for each object: 10000'
-    #test_info += " | msg format: " + "JSON"
-    #test_info += " | msg size: NO INFO"
-    test_info = "Clients number: " + str(clientsNo)
-    test_info += " | msgs per client: " + str(mesagesNo)
-    test_info += " | test time [ms]: " + str(testDuration)
-    test_info += " | Tech: client " + clientTechnology
-    test_info += "; server " + serverTechnology
-    #test_info += " | max time: NO INFO"
-    #test_info += " | min time: NO INFO"
-    #test_info += " | number of runs: NO INFO"
-    throughput = format(((mesagesNo*2*clientsNo)/testDuration), ".2f")
-    test_info += " | avg. throughput [msgs/ms]: " + throughput
-    test_info += " | client: " + clientName
-    test_info += " | server: " + serverName
-    return test_info
+    isLatencyPresent, latency_mean, latency_max, latency_min = getLatencies(outcome_lines)
+    qpms = ((mesagesNo*clientsNo)/testDuration)
+
+    testInfo = {
+      "requests": mesagesNo,
+      "total time": testDuration, #[ms]
+      "client": clientTechnology,
+      "server": serverTechnology,
+      "queries per millisec": qpms,
+      "clientName" : clientName,
+      "serverName" : serverName,
+      "isLatencyPresent" : isLatencyPresent,
+      "latency mean" : latency_mean, #[us]
+      "latency min" : latency_min, #[us]
+      "latency max" : latency_max, #[us]
+    }
+
+    return testInfo
 
 
 def getTechnologyAndName(executablePath, mapping):
