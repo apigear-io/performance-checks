@@ -5,8 +5,6 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(JSON_BuildTests OFF)
 
-#find_package(api COMPONENTS olink-performance-helper)
-
 
 if(NOT TARGET check)
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND})
