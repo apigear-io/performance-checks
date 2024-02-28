@@ -63,14 +63,13 @@ public:
             auto serviceWithAllMessages = 0u;
             for (const auto& element : testData)
             {
-                if (element.sink->propertyChangedTimes() == messages_number)
+                if (element.allResponsesReceived(messages_number))
                 {
                     serviceWithAllMessages++;
                 }
             }
             allMessagesReceived = serviceWithAllMessages == testData.size();
         }
-        std::cout << "All messages received: " + std::to_string(messages_number) << std::endl;
     }
 
 
@@ -80,15 +79,14 @@ public:
         auto allMessagesReceived = false;
         while (!allMessagesReceived)
         {
-            allMessagesReceived = testData.sink->propertyChangedTimes() == messages_number;
+            allMessagesReceived = testData.allResponsesReceived(messages_number);
         }
-        std::cout << "All messages received: " + std::to_string(messages_number) << std::endl;
     }
 
     template<class TestData>
     void waitUntilObjectConnected(const TestData& object)
     {
-        while (!object.sink->isReady ())
+        while (!object.sink->isReady())
         {
             // wait until ready to use.
         }

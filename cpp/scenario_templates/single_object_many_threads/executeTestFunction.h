@@ -44,7 +44,7 @@ void executeTestFunction(TestData& testObject, NetworkProtocolHandler& networkPr
     }
 
     for (auto task : tasks)
-    {
+    {   
         task.wait();
     }
     networkProtocolHandler.waitForReturnMessages(testObject, execute_times * threadCount);

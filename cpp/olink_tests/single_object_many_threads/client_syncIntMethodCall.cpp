@@ -14,34 +14,26 @@
 class PropertyIntTestData
 {
 public:
-    PropertyIntTestData(std::vector<chrono_hr_timepoint>& latenciesStart,
-                        std::vector<chrono_hr_timepoint>& latenciesStop)
-        :m_latenciesStart(latenciesStart),
-        m_latenciesStop(latenciesStop)
+    PropertyIntTestData(std::vector<uint32_t>& latencies)
+        :m_latencies(latencies)
     {
         olinkClient = std::make_shared<Cpp::Api::olink::TestApi0Client>();
         sink = std::make_shared<InspectedSink>(olinkClient);
-        olinkClient->_getPublisher().subscribeToPropIntChanged([this](int propInt) 
-            {
-                auto index = propInt-1;
-                m_latenciesStop[index]=std::chrono::high_resolution_clock::now();
-                count++;
-            });
     }
     void testFunction(uint32_t value)
     {
-        m_latenciesStart[value] = std::chrono::high_resolution_clock::now();
-        olinkClient->setPropInt(value +1);
+        auto start = std::chrono::high_resolution_clock::now();
+        olinkClient->funcInt(value);
+        auto end = std::chrono::high_resolution_clock::now();
+
+        m_latencies[value] = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
     }
     bool allResponsesReceived (uint32_t sentRequestsNumber) const
     {
-        return count == sentRequestsNumber;
+        return true;
     }
 
-    std::vector<chrono_hr_timepoint>& m_latenciesStart;
-    std::vector<chrono_hr_timepoint>& m_latenciesStop;
-
-    uint32_t count=0;
+    std::vector<uint32_t>& m_latencies;
     std::shared_ptr<Cpp::Api::olink::TestApi0Client> olinkClient;
     std::shared_ptr<InspectedSink> sink;
 };
@@ -54,8 +46,8 @@ You can play around with running this program with different messages number and
 int main(int argc, char* argv[])
 {
     std::vector<uint16_t> timePerMessage;
-    auto sendThreadNumber = 1u;
-    auto messages_number = 100u;
+    auto sendThreadNumber = 100u;
+    auto messages_number = 1000u;
     if (argc > 1)
     {
         char* p;
@@ -69,14 +61,11 @@ int main(int argc, char* argv[])
     auto portNumber = 8000;
     auto hostAddress = "127.0.0.1";
     OLinkHandlerForTest olinkProtocolHandler(hostAddress, portNumber);
+    std::vector<uint32_t> latencies(messages_number*sendThreadNumber,0);
+    auto testObject = PropertyIntTestData(latencies);
 
-    std::vector<chrono_hr_timepoint> m_latenciesStart(messages_number * sendThreadNumber, std::chrono::steady_clock::time_point());
-    std::vector<chrono_hr_timepoint> m_latenciesStop(messages_number * sendThreadNumber, std::chrono::steady_clock::time_point());
-
-    auto testObject = PropertyIntTestData(m_latenciesStart, m_latenciesStop);
     executeTestFunction(testObject, olinkProtocolHandler, messages_number, sendThreadNumber);
-    
-    calculateAndPrintLatencyParameters(m_latenciesStart, m_latenciesStop);
 
+    calculateAndPrintLatencyParameters(latencies);
     return 0;
 }

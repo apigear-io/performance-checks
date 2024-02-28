@@ -14,6 +14,10 @@ struct PropertyIntTestData
 public:
     std::shared_ptr<InspectedSink> sink;
     std::function<void(int)> testFunction;
+    bool allResponsesReceived (uint32_t sentRequestsNumber) const
+    {
+        return sink->propertyChangedTimes() == sentRequestsNumber;
+    }
 };
 
 class StringPropertySetter {

@@ -27,6 +27,12 @@ public:
         }
 
     }
+
+    bool allResponsesReceived (uint32_t sentRequestsNumber) const
+    {
+        return sink->propertyChangedTimes() == sentRequestsNumber;
+    }
+
     std::shared_ptr<InspectedSink> sink;
 private:
     // Prepare messages to send before test starts not to slow down it with allocation of this many messages:

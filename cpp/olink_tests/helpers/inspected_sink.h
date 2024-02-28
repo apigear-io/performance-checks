@@ -65,3 +65,4 @@ private:
     bool released = false;
     std::shared_ptr<ApiGear::ObjectLink::IObjectSink> m_sink;
 };
+

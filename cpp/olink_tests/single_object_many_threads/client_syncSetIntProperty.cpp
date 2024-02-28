@@ -15,7 +15,7 @@ class PropertyIntTestData
 {
 public:
     PropertyIntTestData(std::vector<chrono_hr_timepoint>& latenciesStart,
-                        std::vector<chrono_hr_timepoint>& latenciesStop)
+        std::vector<chrono_hr_timepoint>& latenciesStop)
         :m_latenciesStart(latenciesStart),
         m_latenciesStop(latenciesStop)
     {
@@ -32,6 +32,7 @@ public:
     {
         m_latenciesStart[value] = std::chrono::high_resolution_clock::now();
         olinkClient->setPropInt(value +1);
+        while (count < value){}
     }
     bool allResponsesReceived (uint32_t sentRequestsNumber) const
     {
@@ -41,7 +42,7 @@ public:
     std::vector<chrono_hr_timepoint>& m_latenciesStart;
     std::vector<chrono_hr_timepoint>& m_latenciesStop;
 
-    uint32_t count=0;
+    std::atomic<uint32_t> count  { 0 };
     std::shared_ptr<Cpp::Api::olink::TestApi0Client> olinkClient;
     std::shared_ptr<InspectedSink> sink;
 };
@@ -55,7 +56,7 @@ int main(int argc, char* argv[])
 {
     std::vector<uint16_t> timePerMessage;
     auto sendThreadNumber = 1u;
-    auto messages_number = 100u;
+    auto messages_number = 10u;
     if (argc > 1)
     {
         char* p;
@@ -69,14 +70,13 @@ int main(int argc, char* argv[])
     auto portNumber = 8000;
     auto hostAddress = "127.0.0.1";
     OLinkHandlerForTest olinkProtocolHandler(hostAddress, portNumber);
-
     std::vector<chrono_hr_timepoint> m_latenciesStart(messages_number * sendThreadNumber, std::chrono::steady_clock::time_point());
     std::vector<chrono_hr_timepoint> m_latenciesStop(messages_number * sendThreadNumber, std::chrono::steady_clock::time_point());
 
-    auto testObject = PropertyIntTestData(m_latenciesStart, m_latenciesStop);
+    PropertyIntTestData testObject(m_latenciesStart, m_latenciesStop);
     executeTestFunction(testObject, olinkProtocolHandler, messages_number, sendThreadNumber);
-    
-    calculateAndPrintLatencyParameters(m_latenciesStart, m_latenciesStop);
 
+    calculateAndPrintLatencyParameters(m_latenciesStart, m_latenciesStop);
+    
     return 0;
 }
