@@ -1,0 +1,17 @@
+servers:
+QT_BUILD/olink_single_server.exe
+clients:
+QT_BUILD/olink_single_client_syncMethodInt.exe 1 1
+QT_BUILD/olink_single_client_syncMethodInt.exe 10 1
+QT_BUILD/olink_single_client_syncMethodInt.exe 100 1
+QT_BUILD/olink_single_client_syncMethodInt.exe 1000 1
+QT_BUILD/olink_single_client_setIntPropertySync.exe 1 1
+QT_BUILD/olink_single_client_setIntPropertySync.exe 10 1
+QT_BUILD/olink_single_client_setIntPropertySync.exe 100 1
+QT_BUILD/olink_single_client_setIntPropertySync.exe 1000 1
+QT_BUILD/olink_single_client_setIntProperty.exe 1 1
+QT_BUILD/olink_single_client_setIntProperty.exe 10 1
+QT_BUILD/olink_single_client_setIntProperty.exe 100 1
+QT_BUILD/olink_single_client_setIntProperty.exe 1000 1
+QT_BUILD/olink_single_client_asyncMethodInt.exe 1 1
+QT_BUILD/olink_single_client_asyncMethodInt.exe 10 1
