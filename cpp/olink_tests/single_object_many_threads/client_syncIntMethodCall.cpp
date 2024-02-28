@@ -5,44 +5,40 @@
 #include "../../scenario_templates/single_object_many_threads/executeTestFunction.h"
 
 #include <memory>
-#include <string>
+#include <chrono>
+#include <algorithm>
+#include <iostream>
+#include <iomanip>
 
-struct PropertyStringTestData
+class PropertyIntTestData
 {
 public:
-    void testFunction(uint32_t number)
-    {
-        olinkClient->setPropString(messagesToSend[number]);
-    }
-
-
-    PropertyStringTestData(uint32_t messages_number, uint32_t sendThreadNumber)
+    PropertyIntTestData(std::vector<uint32_t>& latencies)
+        :m_latencies(latencies)
     {
         olinkClient = std::make_shared<Cpp::Api::olink::TestApi0Client>();
         sink = std::make_shared<InspectedSink>(olinkClient);
-        for (int msgNo = 0u; msgNo < sendThreadNumber*(messages_number +1); msgNo++)
-        {
-            messagesToSend.push_back("Some longer property to be set, prepared before test for each message number to reduce allocating time in tests"
-                    + std::to_string(msgNo));//make every message different
-        }
-
     }
+    void testFunction(uint32_t value)
+    {
+        auto start = std::chrono::high_resolution_clock::now();
+        olinkClient->funcInt(value);
+        auto end = std::chrono::high_resolution_clock::now();
 
+        m_latencies[value] = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    }
     bool allResponsesReceived (uint32_t sentRequestsNumber) const
     {
-        return sink->propertyChangedTimes() == sentRequestsNumber;
+        return true;
     }
 
-    std::shared_ptr<InspectedSink> sink;
-private:
-    // Prepare messages to send before test starts not to slow down it with allocation of this many messages:
-    std::vector<std::string> messagesToSend;
+    std::vector<uint32_t>& m_latencies;
     std::shared_ptr<Cpp::Api::olink::TestApi0Client> olinkClient;
+    std::shared_ptr<InspectedSink> sink;
 };
 
 /*
-By default test request property string change 1000 times from each of 100 threads.
-Each message is over 100 character long.
+By default test request property int change 1000 times from each of 100 threads.
 Test waits for the responses after sending all the messages, not for each one.
 You can play around with running this program with different messages number and different threads number.
 */
@@ -50,7 +46,7 @@ int main(int argc, char* argv[])
 {
     std::vector<uint16_t> timePerMessage;
     auto sendThreadNumber = 100u;
-    auto messages_number = 1000;
+    auto messages_number = 1000u;
     if (argc > 1)
     {
         char* p;
@@ -61,13 +57,18 @@ int main(int argc, char* argv[])
         char* p;
         sendThreadNumber = strtol(argv[2], &p, 10);
     }
-
-
     auto portNumber = 8000;
     auto hostAddress = "127.0.0.1";
     OLinkHandlerForTest olinkProtocolHandler(hostAddress, portNumber);
-    auto testObject = PropertyStringTestData(sendThreadNumber, messages_number);
+    std::vector<uint32_t> latencies(messages_number*sendThreadNumber,0);
+    auto testObject = PropertyIntTestData(latencies);
 
     executeTestFunction(testObject, olinkProtocolHandler, messages_number, sendThreadNumber);
 
+    auto sum = std::accumulate(latencies.begin(), latencies.end(), 0);
+    double mean = double(sum) / latencies.size();
+    const auto min_max  = std::minmax_element(latencies.begin(), latencies.end());
+
+    std::cout << "Latency: mean " << std::fixed << std::setprecision(2) << mean << " max " << *(min_max.second) << " min " << *(min_max.first) << std::endl;
+    return 0;
 }
