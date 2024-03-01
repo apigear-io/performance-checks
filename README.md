@@ -4,8 +4,8 @@ They also provide some time measurements which may be used to compare different 
 Also they check multithread using many or single objects.
 
 Tests do not use any test framework - to exclude 3rd party calls
-Tests use generated implementation of apigear/performance_interface.module for test sinks and source - this contains basic API which is then replicated 100 with "apigear/GenerateIdl.py" script stored in "apigear/performance_interface100.module.yaml". This file is then used for "performance.solution.yaml".
-"performance.solution.yaml" contains all technologies for which API is generated and used for tests.
+Tests use generated implementation of apigear/performance_interface0.module for test sinks and source, which is used to prepare version for one object only. The apigear/performance_interface100.module contains the basic API which is then replicated 100 with "apigear/GenerateIdl.py" script. The "performance.solution.yaml" uses apigear/performance_interface0.module. To use many objects use "performance100.solution.yaml"
+Solution files contain all technologies for which API is generated and used for tests.
 
 TEST RESULTS ARE AVAILABLE IN JOBS
 For latest results go to actions tab of https://github.com/apigear-io/performance-checks

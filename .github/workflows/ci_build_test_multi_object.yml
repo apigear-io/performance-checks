@@ -1,11 +1,10 @@
 name: Technology Template Build Test
 
 on:
-  pull_request:
-    branches: [main]
-    #schedule:
+#TODO check the workflow_dispatch
+    schedule:
       # Every Monday at 0:00 UTC
-      #- cron: "0 0 * * 1"
+      - cron: "0 0 * * 1"
 
 jobs:
   cmake_build:
@@ -51,7 +50,7 @@ jobs:
 
       - name: Generate APIs
         run: go run main.go install
-      - run: go run main.go generateAPI
+      - run: go run main.go GenerateMulitObjectAPI
       #QT BUILD
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
@@ -72,14 +71,14 @@ jobs:
         if: ${{ matrix.config.os == 'windows-latest'}}
         working-directory: qtmqtt
         run: |
-             cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo  -DCMAKE_CXX_FLAGS_DEBUG="-O2" .
+             cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DMANY_OBJECT_TESTS=ON -DCMAKE_CXX_FLAGS_DEBUG="-O2" .
              cmake --build . --config RelWithDebInfo
              cmake --install . --verbose 
       - name: Build qmqtt mac and linux
         if: ${{ matrix.config.os != 'windows-latest'}}
         working-directory: qtmqtt
         run: |
-             cmake .
+             cmake -DMANY_OBJECT_TESTS=ON .
              cmake --build .
              cmake --install . --verbose
       
@@ -91,7 +90,7 @@ jobs:
         working-directory: qt
         env:
             CTEST_OUTPUT_ON_FAILURE: 1
-        run: cmake -Bbuild -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=tmp && cmake --build build/ && cmake --build build/
+        run: cmake -Bbuild -DBUILD_TESTING=OFF -DMANY_OBJECT_TESTS=ON -DCMAKE_INSTALL_PREFIX=tmp && cmake --build build/ && cmake --build build/
 
         #BUILD CPP
 
@@ -143,7 +142,7 @@ jobs:
       - name: cpp api and tests build for Linux/Mac
         if: ${{ matrix.config.os != 'windows-latest'}}
         working-directory: cpp
-        run: cmake -Bbuild -DCMAKE_INSTALL_PREFIX=tmp -DCMAKE_MODULE_PATH=$GITHUB_WORKSPACE/deps -DCMAKE_BUILD_TYPE=Release -DAPIGEAR_FETCH_OLINKCORE=ON -DCPP_FETCH_DEPS=ON && cmake --build build/ --config Release  && cmake --build build/ --target install --config Release
+        run: cmake -Bbuild -DCMAKE_INSTALL_PREFIX=tmp -DCMAKE_MODULE_PATH=$GITHUB_WORKSPACE/deps -DCMAKE_BUILD_TYPE=Release -DMANY_OBJECT_TESTS=ON -DAPIGEAR_FETCH_OLINKCORE=ON -DCPP_FETCH_DEPS=ON && cmake --build build/ --config Release  && cmake --build build/ --target install --config Release
       - name: Update path env on Windows for testing
         if: ${{ matrix.config.os == 'windows-latest'}}
         run: echo "$GITHUB_WORKSPACE/cpp/build/bin/Release/" >> $GITHUB_PATH
@@ -152,7 +151,7 @@ jobs:
         working-directory: cpp
         run: |
           $Env:GITHUB_WORKSPACE_UNIX = "${{ github.workspace }}" -replace "\\","/"
-          cmake -Bbuild -DCMAKE_INSTALL_PREFIX=tmp -DCMAKE_MODULE_PATH="$Env:GITHUB_WORKSPACE_UNIX/deps" -DCMAKE_BUILD_TYPE=Release -DAPIGEAR_FETCH_OLINKCORE=ON -DCPP_FETCH_DEPS=ON && cmake --build build/ --config Release && cmake --build build/ --target install --config Release     
+          cmake -Bbuild -DCMAKE_INSTALL_PREFIX=tmp -DCMAKE_MODULE_PATH="$Env:GITHUB_WORKSPACE_UNIX/deps" -DCMAKE_BUILD_TYPE=Release -DMANY_OBJECT_TESTS=ON -DAPIGEAR_FETCH_OLINKCORE=ON -DCPP_FETCH_DEPS=ON && cmake --build build/ --config Release && cmake --build build/ --target install --config Release     
       - name: Archive cpp release artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -162,24 +161,10 @@ jobs:
           retention-days: 5
 
 # Run tests
-      - name: RUN olink core no network syncIntMethodCall test WINDOWS
+      - name: RUN scenario olink, many objects, set INT and STRING Property on WINDOWS
         if: ${{ matrix.config.os == 'windows-latest'}}
-        run: ./cpp/build/bin/Release/olink_core_no_network_single_object_syncIntMethodCall.exe
-      - name:  RUN olink core no network syncIntMethodCall test linux/mac
+        run: py testRunner/testRunner/testRunner.py "testRunner/testRunner/scenarios/olink_mulitple_objects_setProperty.txt" "./cpp/build/bin/Release" "./qt/build/bin/Debug" -RunAsAdmin
+      - name: RUN scenario olink, many objects, set INT and STRING Property on linux/mac
         if: ${{ matrix.config.os != 'windows-latest'}}
-        run: ./cpp/build/bin/olink_core_no_network_single_object_syncIntMethodCall
-      - name: RUN olink core no network setIntProperty test WINDOWS
-        if: ${{ matrix.config.os == 'windows-latest'}}
-        run: ./cpp/build/bin/Release/olink_core_no_network_single_object_setIntProperty.exe
-      - name:  RUN olink core no network setIntProperty test linux/mac
-        if: ${{ matrix.config.os != 'windows-latest'}}
-        run: ./cpp/build/bin/olink_core_no_network_single_object_setIntProperty
-
-      - name: RUN scenario olink, single object, set INT and STRING Property on WINDOWS
-        if: ${{ matrix.config.os == 'windows-latest'}}
-        run: py testRunner/testRunner/testRunner.py "testRunner/testRunner/scenarios/olink_single_object_setProperty.txt" "./cpp/build/bin/Release" "./qt/build/bin/Debug" -RunAsAdmin
-      - name: RUN scenario olink, single object, set INT and STRING Property on linux/mac
-        if: ${{ matrix.config.os != 'windows-latest'}}
-        run: sudo python testRunner/testRunner/testRunner.py "testRunner/testRunner/scenarios/olink_single_object_setProperty.txt" "cpp/build/bin" "qt/build/bin"
-
+        run: sudo python testRunner/testRunner/testRunner.py "testRunner/testRunner/scenarios/olink_mulitple_objects_setProperty.txt" "cpp/build/bin" "qt/build/bin"
 
