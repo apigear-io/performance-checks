@@ -17,7 +17,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(JSON_BuildTests OFF)
-
+option(MANY_OBJECT_TESTS "build test for api generated for many objects" OFF)
 
 include(FetchContent)
 
@@ -33,8 +33,10 @@ FetchContent_MakeAvailable(qtpromise)
 
 add_subdirectory(testApi)
 include_directories(testApi/thirdparty)
-add_subdirectory(olink_tests/many_objects)
 add_subdirectory(olink_tests/single_object_many_threads)
 add_subdirectory(mqtt_tests/single_object_many_threads)
+if(MANY_OBJECT_TESTS)
+add_subdirectory(olink_tests/many_objects)
 add_subdirectory(mqtt_tests/many_objects)
+endif()
 

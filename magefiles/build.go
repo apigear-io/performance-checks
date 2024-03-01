@@ -89,3 +89,7 @@ func Install() error {
 func GenerateAPI() {
 	genSol("./apigear/performance.solution.yaml")
 }
+
+func GenerateMulitObjectAPI() {
+	genSol("./apigear/performance100.solution.yaml")
+}
