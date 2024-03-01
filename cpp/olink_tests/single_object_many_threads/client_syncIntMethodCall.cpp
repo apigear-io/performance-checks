@@ -2,6 +2,7 @@
 #include "api/generated/olink/testapi0client.h"
 
 #include "../helpers/olink_network_protocol_handler_for_test.hpp"
+#include "../helpers/latency_helpers.h"
 #include "../../scenario_templates/single_object_many_threads/executeTestFunction.h"
 
 #include <memory>
@@ -65,10 +66,6 @@ int main(int argc, char* argv[])
 
     executeTestFunction(testObject, olinkProtocolHandler, messages_number, sendThreadNumber);
 
-    auto sum = std::accumulate(latencies.begin(), latencies.end(), 0);
-    double mean = double(sum) / latencies.size();
-    const auto min_max  = std::minmax_element(latencies.begin(), latencies.end());
-
-    std::cout << "Latency: mean " << std::fixed << std::setprecision(2) << mean << " max " << *(min_max.second) << " min " << *(min_max.first) << std::endl;
+    calculateAndPrintLatencyParameters(latencies);
     return 0;
 }
