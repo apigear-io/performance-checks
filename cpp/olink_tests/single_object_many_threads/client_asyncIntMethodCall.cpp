@@ -76,8 +76,9 @@ int main(int argc, char* argv[])
     auto hostAddress = "127.0.0.1";
     OLinkHandlerForTest olinkProtocolHandler(hostAddress, portNumber);
 
-    std::vector<chrono_hr_timepoint> m_latenciesStart(messages_number * sendThreadNumber, std::chrono::steady_clock::time_point());
-    std::vector<chrono_hr_timepoint> m_latenciesStop(messages_number * sendThreadNumber, std::chrono::steady_clock::time_point());
+    auto total_messages_number = messages_number * sendThreadNumber;
+    std::vector<chrono_hr_timepoint> m_latenciesStart(total_messages_number, chrono_hr_timepoint());
+    std::vector<chrono_hr_timepoint> m_latenciesStop(total_messages_number, chrono_hr_timepoint());
     PropertyIntTestData testObject(m_latenciesStart, m_latenciesStop);
 
     executeTestFunction(testObject, olinkProtocolHandler, messages_number, sendThreadNumber);

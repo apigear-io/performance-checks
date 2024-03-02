@@ -85,8 +85,8 @@ int main(int argc, char* argv[])
 
     OLinkHandlerNoConnection olinkProtocolHandler(client_node);
 
-    std::vector<chrono_hr_timepoint> m_latenciesStart(messages_number, std::chrono::steady_clock::time_point());
-    std::vector<chrono_hr_timepoint> m_latenciesStop(messages_number, std::chrono::steady_clock::time_point());
+    std::vector<chrono_hr_timepoint> m_latenciesStart(messages_number, chrono_hr_timepoint());
+    std::vector<chrono_hr_timepoint> m_latenciesStop(messages_number, chrono_hr_timepoint());
 
     auto testObject = PropertyIntTestData(m_latenciesStart, m_latenciesStop);
 

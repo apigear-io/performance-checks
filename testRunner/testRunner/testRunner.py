@@ -6,7 +6,7 @@ import subprocess
 from time import sleep
 import re
 
-TEST_TIME_SEARCH_TEXT = "Time measured:" 
+TEST_TIME_SEARCH_TEXT = "Time measured" 
 CLIENT_NUMBER_SEARCH_TEXT = "Objects number:"
 EXECUTION_NUMBER_SEARCH_TEXT = "Function execution number for each object:"
 
@@ -195,7 +195,9 @@ def prepareTestInfo(outcome_lines, server, client, tech_mapping):
     mesagesNo = int(getInfoFromOutput(outcome_lines, EXECUTION_NUMBER_SEARCH_TEXT).strip())
     clientsNo = int(getInfoFromOutput(outcome_lines, CLIENT_NUMBER_SEARCH_TEXT).strip())
     isLatencyPresent, latency_mean, latency_max, latency_min = getLatencies(outcome_lines)
-    qpms = ((mesagesNo*clientsNo)/testDuration)
+    qpms = 0
+    if testDuration != 0 :
+        qpms = ((mesagesNo*clientsNo)/testDuration)
 
     testInfo = {
       "requests": mesagesNo,
