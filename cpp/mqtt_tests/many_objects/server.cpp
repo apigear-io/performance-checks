@@ -72,7 +72,7 @@ int main(int argc, char* argv[])
         auto end = std::chrono::high_resolution_clock::now();
 
         auto test_duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
-        std::cout << "server finished work, time measured " << test_duration.count() << std::endl;
+        std::cout << "server finished work, time measured [ms]" << test_duration.count() << std::endl;
         service->disconnect();
     });
 

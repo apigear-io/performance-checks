@@ -53,7 +53,7 @@ void executeTestFunction(std::vector<TestData>& testData, NetworkProtocolHandler
     auto time = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
 
 
-    std::cout << "Time measured: " << time.count() << std::endl;
+    std::cout << "Time measured [ms]: " << time.count() << std::endl;
     std::cout << "Objects number: " << testData.size() << std::endl;
     std::cout << "Function execution number for each object: " << execute_times << std::endl;
 }
