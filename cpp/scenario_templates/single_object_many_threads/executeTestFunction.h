@@ -53,7 +53,7 @@ void executeTestFunction(TestData& testObject, NetworkProtocolHandler& networkPr
     auto end = std::chrono::high_resolution_clock::now();
 
     auto time = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
-    std::cout << "Time measured: " << time.count() << std::endl;
+    std::cout << "Time measured [ms]: " << time.count() << std::endl;
     std::cout << "Objects number: 1" << std::endl;
     std::cout << "Function execution number for each object: " << threadCount * execute_times << std::endl;
 }
