@@ -67,6 +67,7 @@ def getFileFromClientLine(words, paths):
 
 def prepareClientProcess(client_line, paths):
     words = splitClientAndArguments(client_line)
+    words[0] = words[0].lstrip("\"").rstrip("\"")
     clientFile = getFileFromClientLine(words, paths).lstrip("\"").rstrip("\"")
     clientFileNew = removePostfixIfNoOriginalFile(clientFile)
     if (clientFileNew != clientFile):
@@ -75,6 +76,9 @@ def prepareClientProcess(client_line, paths):
     if not os.path.isfile(clientFile):
         print("File doesn't exist: " + clientFile)
         return []
+    if len(words)>2:
+        words2 = [words[0], words[1]+" " + words[2] + " " + words[3]]
+        return words2
     return words
 
 def main():
@@ -113,18 +117,24 @@ def main():
                 return 1
             server_proces = subprocess.Popen(server, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             sleep(1)
-            client_proces = subprocess.Popen(client_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            print("Client Args")
+            print(client_args)
+            client_proces = subprocess.Popen(client, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             try:
-                server_proces.wait(300)
-                client_proces.wait(300)
+                server_proces.wait(150)
+                client_proces.wait(150)
             except subprocess.TimeoutExpired:
                 server_proces.kill()
                 client_proces.kill()
                 print("Timeout for pair: ")
                 print(client)
-                print(client_proces.communicate()[0].decode())
+                client_output = client_proces.communicate()
+                if len (client_output) > 0:
+                    print(client_output[0].decode)
                 print(server)
-                print(server_proces.communicate()[0].decode())
+                server_output = server_proces.communicate()
+                if len (server_output) > 0:
+                    print(server_output[0].decode)
                 return 1
             server_outcome_lines = unify_delimeters_and_split(server_proces.communicate()[0].decode())
             client_outcome_lines = unify_delimeters_and_split(client_proces.communicate()[0].decode())
@@ -139,7 +149,7 @@ def main():
             print(formated_line)
             linesToWriteResult.append(formated_line)
             linesToWriteCsv.append(format_to_csv(test_info))
-            sleep(2)
+            sleep(20)
     scenarioPath = scenarioPath.split("/")
     resultFileName = "report_" +  scenarioPath[len(scenarioPath) -1]
     report_file = open(resultFileName,'w')
