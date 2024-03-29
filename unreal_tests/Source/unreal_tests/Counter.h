@@ -10,7 +10,8 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FTestCounterThresholdDelegate);
 
 /**
- * 
+ * Counts total execution of any increase method.
+ * When count is equal to set Threshold it emits the OnThresholdReached delegate
  */
 UCLASS()
 class UNREAL_TESTS_API UCounter : public UObject
@@ -19,39 +20,14 @@ class UNREAL_TESTS_API UCounter : public UObject
 public:
 
     UFUNCTION()
-	void increaseInt(int notUsedPsrameter)
-    {
-        counter+=1;
-        if (counter >= Threshold)
-        {
-            std::cout << "Threshold reached" << std::endl;
-            OnThresholdReached.Broadcast();
-        }
-    }
+        void increaseInt(int notUsedPsrameter);
     UFUNCTION()
-    void increaseString(const FString& notUsedPsrameter)
-    {
-        counter+=1;
-        if (counter >= Threshold)
-        {
-            std::cout << "Threshold reached" << std::endl;
-            OnThresholdReached.Broadcast();
-        }
-    }
+        void increaseString(const FString& notUsedPsrameter);
     UFUNCTION()
-    void increaseFloat(const float notUsedPsrameter)
-    {
-        counter++;
-        if (counter >= Threshold)
-        {
-            OnThresholdReached.Broadcast();
-        }
-    }
+        void increaseFloat(const float notUsedPsrameter);
+ 
     UFUNCTION()
-    int getCount()
-    {
-        return counter;
-    }
+        int getCount();
 
     UPROPERTY(BlueprintAssignable, DisplayName = "Threshold Reached Delegate")
         FTestCounterThresholdDelegate OnThresholdReached;
