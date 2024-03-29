@@ -2,19 +2,21 @@
 
 #include "SyncIntMethodHandler.h"
 
-void USyncIntMethodHandler::initialize(UApiTestApi0OLinkClient* clientApi0,
-                int startValue,
-                int messagesCount,
-                UCounter* mainCounter)
+void USyncIntMethodHandler::initialize(UApiTestApi0OLinkClient* clientApi0, UCounter* mainCounter, int messagesCount)
 {
-    Threshold = messagesCount;
     m_clientApi0= clientApi0;
-    m_currentValue = startValue;
     m_mainCounter = mainCounter;
+    OnTaskEnded.AddDynamic(this, &USyncIntMethodHandler::executeNextTask);
+    Threshold = messagesCount;
     m_startTimePoints= std::vector<chrono_hr_timepoint>(messagesCount, chrono_hr_timepoint());
     m_stopTimePoints =  std::vector<chrono_hr_timepoint>(messagesCount, chrono_hr_timepoint());
-    OnTaskEnded.AddDynamic(this, &USyncIntMethodHandler::executeNextTask);
     m_futures.reserve(messagesCount);
+}
+
+void USyncIntMethodHandler::start(int startValue)
+{
+    m_currentValue = startValue;
+    executeNextTask();
 }
 
 USyncIntMethodHandler::~USyncIntMethodHandler()
