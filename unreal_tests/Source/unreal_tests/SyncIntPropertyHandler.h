@@ -15,6 +15,12 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSyncIntPropertyHandlerThresholdDelegate);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSyncIntPropertyHandlerTaskEndedDelegate);
 
 /**
+ * Class used to execute an int property change request on UApiTestApi0OLinkClient
+ * in a synchronous matter, it sends next request only after object receives the response.
+ * Configure the number of sent messages with @param messagesCount 
+ * Configure the start number with @param startValue, each next request is increased with 1
+ * Initialize must be called before use, also make sure that the initialize method is called before you add 
+ * a stop test condition to delegate in UApiTestApi0OLinkClient "OnPropIntChanged"
  * 
  */
 UCLASS()
@@ -22,53 +28,18 @@ class UNREAL_TESTS_API USyncIntPropertyHandler : public UObject
 {
 	GENERATED_BODY()
 public:
-    void initialize(UApiTestApi0OLinkClient* clientApi0,
-                    int startValue,
-                    int messagesCount)
-    {
-        Threshold = messagesCount;
-        m_clientApi0= clientApi0;
-        currentNumber = startValue +1;//Changes are not sent if request is for already set property. Default value for Int is "0", in test we always add 1 for setting int property to make sure value is always set.
-        m_startTimePoints= std::vector<chrono_hr_timepoint>(messagesCount, chrono_hr_timepoint());
-        m_stopTimePoints =  std::vector<chrono_hr_timepoint>(messagesCount, chrono_hr_timepoint());
-        OnTaskEnded.AddDynamic(this, &USyncIntPropertyHandler::executeNextTask);
-        m_clientApi0->_GetSignals_Implementation()->OnPropIntChanged.AddDynamic(this, &USyncIntPropertyHandler::onPropertyChangeReceived);
-    }
+    void initialize(UApiTestApi0OLinkClient* clientApi0, int startValue, int messagesCount);
+    /*Use this function to start executing set int property in a synchronous way*/
+    void start() { executeNextTask(); }
 
     UFUNCTION()
-    void onPropertyChangeReceived(int number)
-    {
-        if (number == currentNumber)
-        {
-            m_stopTimePoints[counter] = std::chrono::high_resolution_clock::now();
-            counter+=1;
-            currentNumber+=1;
-        }
-        else { return; }
-
-        if (counter == Threshold)
-        {
-            OnTaskEnded.RemoveDynamic(this, &USyncIntPropertyHandler::executeNextTask);
-            OnThresholdReached.Broadcast();
-        }
-        else 
-        {
-            OnTaskEnded.Broadcast();
-        }
-    }
+        void onPropertyChangeReceived(int number);
 
     UFUNCTION()
-	void executeNextTask()
-    {
-        m_startTimePoints[counter] = std::chrono::high_resolution_clock::now();
-        m_clientApi0->Execute_SetPropInt(m_clientApi0, currentNumber);
-    }
+        void executeNextTask();
 
     UFUNCTION()
-    int getCount()
-    {
-        return counter;
-    }
+        int getCount();
 
     UPROPERTY(BlueprintAssignable, DisplayName = "Threshold Reached Delegate")
         FSyncIntPropertyHandlerThresholdDelegate OnThresholdReached;
@@ -77,15 +48,8 @@ public:
     UPROPERTY(BlueprintReadWrite)
         int Threshold;
 
-    std::vector<chrono_hr_timepoint>& getStartPoints()
-    {
-        return m_startTimePoints;
-    }
-
-    std::vector<chrono_hr_timepoint>& getStopPoints()
-    {
-        return m_stopTimePoints;
-    }
+    std::vector<chrono_hr_timepoint>& getStartPoints();
+    std::vector<chrono_hr_timepoint>& getStopPoints();
 
 private:
     UApiTestApi0OLinkClient* m_clientApi0;
