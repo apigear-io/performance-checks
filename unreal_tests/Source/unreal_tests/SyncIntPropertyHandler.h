@@ -28,9 +28,9 @@ class UNREAL_TESTS_API USyncIntPropertyHandler : public UObject
 {
 	GENERATED_BODY()
 public:
-    void initialize(UApiTestApi0OLinkClient* clientApi0, int startValue, int messagesCount);
+    void initialize(UApiTestApi0OLinkClient* clientApi0, int messagesCount);
     /*Use this function to start executing set int property in a synchronous way*/
-    void start() { executeNextTask(); }
+    void start(int startValue);
 
     UFUNCTION()
         void onPropertyChangeReceived(int number);

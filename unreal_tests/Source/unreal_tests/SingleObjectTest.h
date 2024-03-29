@@ -53,7 +53,7 @@ public:
 	* TestOperationType 3 is execute method sync
 	*/
 	UPROPERTY(Config)
-	int TestOperationType = 1;
+	int TestOperationType = 0;
 	UPROPERTY()
 		USyncIntMethodHandler* m_syncMethodHandler = nullptr;
 	UPROPERTY()
@@ -64,6 +64,12 @@ private:
 	std::chrono::time_point<std::chrono::high_resolution_clock> begin;
 	std::vector<FString> messagesToSend;
 	std::function<void(int)> executeTestOperation;
+
+	//--------------------
+	void executeStringTest(int startNumber);
+	void executeFloatTest(int startNumber);
+	void executeAsyncPropertyIntTest(int startNumber);
+	void executeAsyncMethodIntTest(int startNumber);
 
 	// Points are used to measure latency - only valid for int type property, for which also TestOperationType can be chosen.
 	std::vector<chrono_hr_timepoint> m_startTimePoints;

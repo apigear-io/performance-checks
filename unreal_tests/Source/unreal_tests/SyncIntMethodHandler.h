@@ -27,16 +27,12 @@ class UNREAL_TESTS_API USyncIntMethodHandler : public UObject
 {
 	GENERATED_BODY()
 public:
-    void initialize(UApiTestApi0OLinkClient* clientApi0,
-        int startValue,
-        int messagesCount,
-        UCounter* mainCounter);
+    void initialize(UApiTestApi0OLinkClient* clientApi0, UCounter* mainCounter, int messagesCount);
 
     ~USyncIntMethodHandler();
 
     /*Use this function to start executing int method in synchronous way*/
-    void start() { executeNextTask(); }
-
+    void start(int startValue);
 
     UFUNCTION()
         void executeNextTask();

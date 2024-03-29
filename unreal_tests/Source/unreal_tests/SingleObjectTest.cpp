@@ -71,54 +71,38 @@ void USingleObjectTest::configureExecuteOperation(UApiTestApi0OLinkClient* clien
         if (TestOperationType == 0) // Set Property ASYNC
         {
             std::cout << "Property Async" << std::endl;
-            executeTestOperation = [clientApi0, this](int number)
-            {
-                 m_startTimePoints[number] = std::chrono::high_resolution_clock::now();
-                 clientApi0->Execute_SetPropInt(clientApi0, number+1);
-            };
+            executeTestOperation = [this](int startNumber) { executeAsyncPropertyIntTest(startNumber); };
             clientApi0->_GetSignals_Implementation()->OnPropIntChanged.AddDynamic(this, &USingleObjectTest::AddStopTimePointPropertyInt);
         }
         else if (TestOperationType == 1)// Set Property SYNC
         {
             std::cout << "Property Sync" << std::endl;
             m_syncIntPropertyHandler= NewObject<USyncIntPropertyHandler>(this, USyncIntPropertyHandler::StaticClass(), FName("USyncIntPropertyHandler"));
-            m_syncIntPropertyHandler->initialize(clientApi0, 0, RequestsPerThread);// TODO only works for one thread now
+            m_syncIntPropertyHandler->initialize(clientApi0, RequestsPerThread);// TODO only works for one thread now
+            executeTestOperation = [this](int startNumber) { m_syncIntPropertyHandler->start(startNumber); };
         }
         else if (TestOperationType == 2) // Call Method ASYNC
         {
             std::cout << "Method Async" << std::endl;
-            executeTestOperation = [clientApi0, this](int number)
-            {
-                m_futures.push_back(Async(EAsyncExecution::ThreadPool,
-                    [number, clientApi0, this]()
-                    {
-                        m_startTimePoints[number] = std::chrono::high_resolution_clock::now();
-                        clientApi0->Execute_FuncInt(clientApi0, number);
-                        m_stopTimePoints[number] = std::chrono::high_resolution_clock::now();
-                        propertyChangeCounter->increaseInt(number);
-                    }).Share());
-            };
+            executeTestOperation = [this](int startNumber) {executeAsyncMethodIntTest(startNumber); };
         }
         else if (TestOperationType == 3)// Call Method SYNC
         {
             std::cout << "Method Sync" << std::endl;
+            m_syncMethodHandler= NewObject<USyncIntMethodHandler>(this, USyncIntMethodHandler::StaticClass(), FName("SyncIntMethodHandler"));
+            m_syncMethodHandler->initialize(clientApi0, propertyChangeCounter, RequestsPerThread);// TODO only works for one thread now
+            executeTestOperation = [this](int startNumber) { m_syncMethodHandler->start(startNumber); };
         }
     }
     else if (TestPropertyType == 2)
     {
         std::cout << "Test for float property" << std::endl;
-        executeTestOperation = [clientApi0](int number)
-        {
-            clientApi0->Execute_SetPropFloat(clientApi0, number + 1.0f + number/1000.0f);
-        };
+        executeTestOperation = [this](int startNumber) {executeFloatTest(startNumber); };
     }
     else if (TestPropertyType == 1)
     {
         std::cout << "Test for string property" << std::endl;
-        executeTestOperation = [clientApi0, this](int number)
-        {
-            clientApi0->Execute_SetPropString(clientApi0, messagesToSend[number]);
-        };
+        executeTestOperation = [this](int startNumber) {executeStringTest(startNumber); };
     }
 }
 
@@ -144,11 +128,12 @@ void USingleObjectTest::Execute()
     m_stopTimePoints =  std::vector<chrono_hr_timepoint>(messages_number, chrono_hr_timepoint());
     m_futures.reserve(messages_number);
     
-    configureExecuteOperation(clientApi0);//Must be executed before subscribeForPropertyChanges, the order of adding callbacks for setting property matters
     propertyChangeCounter = NewObject<UCounter>(this, UCounter::StaticClass(), FName("propertyChangedCounter"));
     propertyChangeCounter->Threshold = messages_number;
-    subscribeForPropertyChanges(clientApi0, propertyChangeCounter);
     propertyChangeCounter->OnThresholdReached.AddDynamic(this, &USingleObjectTest::FinishTest);
+
+    configureExecuteOperation(clientApi0);//Must be executed before subscribeForPropertyChanges, the order of adding callbacks for setting property matters
+    subscribeForPropertyChanges(clientApi0, propertyChangeCounter);
 
     std::vector<TSharedFuture<void>> tasks;
     begin = std::chrono::high_resolution_clock::now();
@@ -159,39 +144,14 @@ void USingleObjectTest::Execute()
             [clientApi0, this, threadNo]() {
 
                 auto startNumber = threadNo * RequestsPerThread;
-                if (TestPropertyType == 0 && (TestOperationType == 1 || TestOperationType == 3))
-                {
-                    if (TestOperationType == 3)
-                    {
-                         m_syncMethodHandler= NewObject<USyncIntMethodHandler>(this, USyncIntMethodHandler::StaticClass(), FName("SyncIntMethodHandler"));
-                         m_syncMethodHandler->initialize(clientApi0, startNumber, RequestsPerThread, propertyChangeCounter);
-                         m_syncMethodHandler->start();
-
-                    }
-                    else if (TestOperationType == 1)
-                    {
-                         m_syncIntPropertyHandler->start();
-                    }
-                }
-                else {
-                    for (auto i = 0; i < RequestsPerThread; i++)
-                    {
-                        auto number = startNumber + i;
-                        executeTestOperation(number);
-                    }
-                }
+                executeTestOperation(startNumber);
             });
         tasks.push_back(sendMessagesTask.Share());
     }
-    std::cout << "Messages sent" << std::endl;
-    UE_LOG(LogTemp, Warning, TEXT(" ALL MESSAGES SENT"));
     for (auto task : tasks)
     {
         task.Get();
     }
-
-    UE_LOG(LogTemp, Warning, TEXT("WAITING FOR MESSAGES"));
-
 }
 
 UApiTestApi0OLinkClient* USingleObjectTest::getClient0ApiSubsystem()
@@ -233,23 +193,64 @@ void USingleObjectTest::FinishTest()
     }
 
 
-    if (m_futures.size() != 0)
-    {
-        quitGamedelegate = ApiGearTicker::GetCoreTicker().AddTicker(*processMessageFunctionName, 0,
-            [this](float /*param*/)
+    quitGamedelegate = ApiGearTicker::GetCoreTicker().AddTicker(*processMessageFunctionName, 0,
+        [this](float /*param*/)
+        {
+            for (auto& future : m_futures)
             {
-                for (auto& future : m_futures)
-                {
-                    future.Get();
-                }
-                UKismetSystemLibrary::QuitGame(GetWorld(), nullptr, EQuitPreference::Quit, true);
-                ApiGearTicker::GetCoreTicker().RemoveTicker(quitGamedelegate);
-                return true;
-            });
-    }
-    else 
+                future.Get();
+            }
+            UKismetSystemLibrary::QuitGame(GetWorld(), nullptr, EQuitPreference::Quit, true);
+            ApiGearTicker::GetCoreTicker().RemoveTicker(quitGamedelegate);
+            return true;
+        });
+}
+
+
+void USingleObjectTest::executeStringTest(int startNumber)
+{
+    auto clientApi0 = getClient0ApiSubsystem();
+    for (auto i = 0; i < RequestsPerThread; i++)
     {
-        UKismetSystemLibrary::QuitGame(GetWorld(), nullptr, EQuitPreference::Quit, true);
+        auto number = startNumber + i;
+        clientApi0->Execute_SetPropString(clientApi0, messagesToSend[number]);
+    }
+}
+void USingleObjectTest::executeFloatTest(int startNumber)
+{
+    auto clientApi0 = getClient0ApiSubsystem();
+    for (auto i = 0; i < RequestsPerThread; i++)
+    {
+        auto number = startNumber + i;
+        clientApi0->Execute_SetPropFloat(clientApi0, number + 1.0f + number / 1000.0f);
+    }
+}
+
+void USingleObjectTest::executeAsyncPropertyIntTest(int startNumber)
+{
+    auto clientApi0 = getClient0ApiSubsystem();
+    for (auto i = 0; i < RequestsPerThread; i++)
+    {
+        auto number = startNumber + i;
+        m_startTimePoints[number] = std::chrono::high_resolution_clock::now();
+        clientApi0->Execute_SetPropInt(clientApi0, number+1);
+    }
+}
+
+void USingleObjectTest::executeAsyncMethodIntTest(int startNumber)
+{
+    auto clientApi0 = getClient0ApiSubsystem();
+    for (auto i = 0; i < RequestsPerThread; i++)
+    {
+        auto number = startNumber + i;
+        m_futures.push_back(Async(EAsyncExecution::ThreadPool,
+            [number, clientApi0, this]()
+            {
+                m_startTimePoints[number] = std::chrono::high_resolution_clock::now();
+                clientApi0->Execute_FuncInt(clientApi0, number);
+                m_stopTimePoints[number] = std::chrono::high_resolution_clock::now();
+                propertyChangeCounter->increaseInt(number);
+            }).Share());
     }
 }
 
