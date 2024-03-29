@@ -14,7 +14,7 @@ void Aunreal_testsGameModeBase::InitGame(const FString& MapName, const FString& 
 
     auto gameInstance = UGameplayStatics::GetGameInstance(GetWorld());
     UApiTestApi0OLinkClient* clientApi0 = gameInstance->GetSubsystem<UApiTestApi0OLinkClient>();
-    clientApi0->_SubscriptionStatusdChanged.AddDynamic(this, &Aunreal_testsGameModeBase::ConnectionIsReady);
+    clientApi0->_SubscriptionStatusChanged.AddDynamic(this, &Aunreal_testsGameModeBase::ConnectionIsReady);
 
     
     UWorld* world = GetWorld();

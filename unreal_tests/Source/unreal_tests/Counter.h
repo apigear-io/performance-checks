@@ -4,8 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include <future>
 #include "Counter.generated.h"
-
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FTestCounterThresholdDelegate);
 
@@ -21,18 +21,20 @@ public:
     UFUNCTION()
 	void increaseInt(int notUsedPsrameter)
     {
-        counter++;
+        counter+=1;
         if (counter >= Threshold)
         {
+            std::cout << "Threshold reached" << std::endl;
             OnThresholdReached.Broadcast();
         }
     }
     UFUNCTION()
     void increaseString(const FString& notUsedPsrameter)
     {
-        counter++;
+        counter+=1;
         if (counter >= Threshold)
         {
+            std::cout << "Threshold reached" << std::endl;
             OnThresholdReached.Broadcast();
         }
     }
@@ -56,5 +58,5 @@ public:
     UPROPERTY(BlueprintReadWrite)
         int Threshold;
 private:
-    int counter = 0;
+    std::atomic<int> counter{ 0 };
 };
