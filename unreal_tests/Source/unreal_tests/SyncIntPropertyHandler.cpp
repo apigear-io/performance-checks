@@ -4,17 +4,20 @@
 
 
 
-void USyncIntPropertyHandler::initialize(UApiTestApi0OLinkClient* clientApi0,
-                int startValue,
-                int messagesCount)
+void USyncIntPropertyHandler::initialize(UApiTestApi0OLinkClient* clientApi0, int messagesCount)
 {
-    Threshold = messagesCount;
     m_clientApi0= clientApi0;
-    currentNumber = startValue +1;//Changes are not sent if request is for already set property. Default value for Int is "0", in test we always add 1 for setting int property to make sure value is always set.
-    m_startTimePoints= std::vector<chrono_hr_timepoint>(messagesCount, chrono_hr_timepoint());
-    m_stopTimePoints =  std::vector<chrono_hr_timepoint>(messagesCount, chrono_hr_timepoint());
     OnTaskEnded.AddDynamic(this, &USyncIntPropertyHandler::executeNextTask);
     m_clientApi0->_GetSignals_Implementation()->OnPropIntChanged.AddDynamic(this, &USyncIntPropertyHandler::onPropertyChangeReceived);
+    Threshold = messagesCount;
+    m_startTimePoints= std::vector<chrono_hr_timepoint>(messagesCount, chrono_hr_timepoint());
+    m_stopTimePoints =  std::vector<chrono_hr_timepoint>(messagesCount, chrono_hr_timepoint());
+}
+
+void USyncIntPropertyHandler::start(int startValue)
+{
+    currentNumber = startValue +1;//Changes are not sent if request is for already set property. Default value for Int is "0", in test we always add 1 for setting int property to make sure value is always set.
+    executeNextTask();
 }
 
 void USyncIntPropertyHandler::onPropertyChangeReceived(int number)
