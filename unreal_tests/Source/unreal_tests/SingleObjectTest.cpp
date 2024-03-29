@@ -165,12 +165,12 @@ void USingleObjectTest::Execute()
                     {
                          m_syncMethodHandler= NewObject<USyncIntMethodHandler>(this, USyncIntMethodHandler::StaticClass(), FName("SyncIntMethodHandler"));
                          m_syncMethodHandler->initialize(clientApi0, startNumber, RequestsPerThread, propertyChangeCounter);
-                         m_syncMethodHandler->executeNextTask();
+                         m_syncMethodHandler->start();
 
                     }
                     else if (TestOperationType == 1)
                     {
-                         m_syncIntPropertyHandler->executeNextTask();
+                         m_syncIntPropertyHandler->start();
                     }
                 }
                 else {
