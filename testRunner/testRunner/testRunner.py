@@ -9,6 +9,7 @@ import re
 TEST_TIME_SEARCH_TEXT = "Time measured" 
 CLIENT_NUMBER_SEARCH_TEXT = "Objects number:"
 EXECUTION_NUMBER_SEARCH_TEXT = "Function execution number for each object:"
+SHELL = "SHELL"
 
 
 #requires CPP_BUILD and QT_BUILD to point to binaries
@@ -24,11 +25,14 @@ class scenario:
         line_list = input_file.readlines()
         readingServers = False;
         readingClients = False;
-        for line in line_list:   
-            if line.lstrip().startswith('servers:'):
+        for line in line_list:
+            line = line.lstrip()
+            if not line:
+                continue
+            if line.startswith('servers:'):
                 readingServers = True
                 readingClients = False
-            elif line.lstrip().startswith('clients:'):
+            elif line.startswith('clients:'):
                 readingServers = False
                 readingClients = True
             elif  readingServers:
@@ -40,7 +44,6 @@ class scenario:
 
 def setPathsAndFormat(line, cpp_build_path, qt_build_path, unreal_test_dir):
     element = line.rstrip('\n');
-    element.lstrip()
     element = element.replace("CPP_BUILD", cpp_build_path);
     element = element.replace("QT_BUILD", qt_build_path);
     element = element.replace("UNREAL_DIR", unreal_test_dir);
@@ -48,7 +51,7 @@ def setPathsAndFormat(line, cpp_build_path, qt_build_path, unreal_test_dir):
 
 #if file with given path doesnt exist it tries to remove the .exe postfix
 def removePostfixIfNoOriginalFile(file_path):
-    if not os.path.isfile(file_path):
+    if file_path.endswith('.exe') and not os.path.isfile(file_path):
         file_path = file_path.rstrip('.exe')
     return file_path
 
@@ -63,22 +66,22 @@ def getFileFromClientLine(words, paths):
             path_index = word.find(path)
             if path_index != -1:
                 return word
+    print("client not found in a command")
     return ""
 
 def prepareClientProcess(client_line, paths):
     words = splitClientAndArguments(client_line)
-    words[0] = words[0].lstrip("\"").rstrip("\"")
     clientFile = getFileFromClientLine(words, paths).lstrip("\"").rstrip("\"")
     clientFileNew = removePostfixIfNoOriginalFile(clientFile)
-    if (clientFileNew != clientFile):
+    if not os.path.isfile(clientFileNew):
+        return []
+    elif (clientFileNew != clientFile):
         words = [w.replace(clientFile, clientFileNew) for w in words]
         clientFile = clientFileNew
-    if not os.path.isfile(clientFile):
-        print("File doesn't exist: " + clientFile)
-        return []
-    if len(words)>2:
-        words2 = [words[0], words[1]+" " + words[2] + " " + words[3]]
-        return words2
+    # if execute as shell command it is one line, for unreal some arguments were skipped otherwise
+    if len(words)>0 and words[0] == SHELL:
+        words.pop(0)
+        words = [SHELL, (' '.join(words))]
     return words
 
 def main():
@@ -115,46 +118,67 @@ def main():
             if not os.path.isfile(server):
                 print("File doesn't exist: " + server)
                 return 1
-            server_proces = subprocess.Popen(server, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            sleep(1)
-            print("Client Args")
-            print(client_args)
-            client_proces = subprocess.Popen(client, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             try:
-                server_proces.wait(150)
-                client_proces.wait(150)
-            except subprocess.TimeoutExpired:
-                server_proces.kill()
-                client_proces.kill()
-                print("Timeout for pair: ")
-                print(client)
-                client_output = client_proces.communicate()
-                if len (client_output) > 0:
-                    print(client_output[0].decode)
-                print(server)
-                server_output = server_proces.communicate()
-                if len (server_output) > 0:
-                    print(server_output[0].decode)
-                return 1
+                server_proces = None
+                client_proces = None
+                server_proces = subprocess.Popen(server, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                sleep(1)
+                if len(client_args) == 0:
+                    if server_proces != None:
+                        server_proces.kill()
+                    print("client not found in line")
+                    print(client)
+                    return 1
+                if client_args[0].startswith(SHELL):
+                    client_proces = subprocess.Popen(client_args[1], shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                else:
+                    client_proces = subprocess.Popen(client_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                try:
+                    server_proces.wait(150)
+                    client_proces.wait(150)
+                except subprocess.TimeoutExpired:
+                    server_proces.kill()
+                    client_proces.kill()
+                    print("Timeout for pair: ")
+                    print(client)
+                    print(client_proces.communicate()[0].decode)
+                    print(server)
+                    print(server_proces.communicate()[0].decode)
+                    return 1
+            except Exception as e:
+                if server_proces != None:
+                    server_proces.kill()
+                if client_proces != None:
+                    client_proces.kill()
+                raise
             server_outcome_lines = unify_delimeters_and_split(server_proces.communicate()[0].decode())
             client_outcome_lines = unify_delimeters_and_split(client_proces.communicate()[0].decode())
             if (len(server_outcome_lines[0]) == 0):
+                if server_proces != None:
+                    server_proces.kill()
                 print("someting went wrong when running " + server + " check if your exe can be run")
                 continue
             if (len(client_outcome_lines[0]) == 0):
                 print("someting went wrong when running " + client + ", check if your exe can be run")
+                if client_proces != None:
+                    client_proces.kill()
                 continue
             test_info = prepareTestInfo(client_outcome_lines, server, client, tech_mapping)
             formated_line = format_for_output(test_info)
             print(formated_line)
             linesToWriteResult.append(formated_line)
             linesToWriteCsv.append(format_to_csv(test_info))
-            sleep(20)
+            sleep(2)
     scenarioPath = scenarioPath.split("/")
+    reportfolderName = "reports"
+
+    if not os.path.exists(reportfolderName):
+        os.makedirs(reportfolderName)
+
     resultFileName = "report_" +  scenarioPath[len(scenarioPath) -1]
-    report_file = open(resultFileName,'w')
+    report_file = open(reportfolderName +"/"+resultFileName,'w')
     report_file.writelines(line + '\n' for line in linesToWriteResult)
-    csv_report = open("csv_"+resultFileName,'w')
+    csv_report = open(reportfolderName +"/"+"csv_"+resultFileName,'w')
     csv_report.writelines(line + '\n' for line in linesToWriteCsv)
     return 0
 
