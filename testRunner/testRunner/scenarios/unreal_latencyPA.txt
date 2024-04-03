@@ -1,0 +1,7 @@
+servers:
+CPP_BUILD/olink_single_server.exe
+clients:
+SHELL "c:/Program Files/Epic Games/UE_5.1/Engine/Binaries/Win64/UnrealEditor.exe" "UNREAL_DIR/unreal_tests.uproject" -game -GAMEINI="UNREAL_DIR/TestVarConfigs/PropertyAsync_1.ini"
+SHELL "c:/Program Files/Epic Games/UE_5.1/Engine/Binaries/Win64/UnrealEditor.exe" "UNREAL_DIR/unreal_tests.uproject" -game -GAMEINI="UNREAL_DIR/TestVarConfigs/PropertyAsync_10.ini"
+SHELL "c:/Program Files/Epic Games/UE_5.1/Engine/Binaries/Win64/UnrealEditor.exe" "UNREAL_DIR/unreal_tests.uproject" -game -GAMEINI="UNREAL_DIR/TestVarConfigs/PropertyAsync_100.ini"
+SHELL "c:/Program Files/Epic Games/UE_5.1/Engine/Binaries/Win64/UnrealEditor.exe" "UNREAL_DIR/unreal_tests.uproject" -game -GAMEINI="UNREAL_DIR/TestVarConfigs/PropertyAsync_1000.ini"

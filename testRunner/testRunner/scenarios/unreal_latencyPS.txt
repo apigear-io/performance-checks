@@ -1,0 +1,7 @@
+servers:
+QT_BUILD/olink_single_server.exe
+clients:
+SHELL "c:/Program Files/Epic Games/UE_5.1/Engine/Binaries/Win64/UnrealEditor.exe" "UNREAL_DIR/unreal_tests.uproject" -game -GAMEINI="UNREAL_DIR/TestVarConfigs/PropertySync_1.ini"
+SHELL "c:/Program Files/Epic Games/UE_5.1/Engine/Binaries/Win64/UnrealEditor.exe" "UNREAL_DIR/unreal_tests.uproject" -game -GAMEINI="UNREAL_DIR/TestVarConfigs/PropertySync_10.ini"
+SHELL "c:/Program Files/Epic Games/UE_5.1/Engine/Binaries/Win64/UnrealEditor.exe" "UNREAL_DIR/unreal_tests.uproject" -game -GAMEINI="UNREAL_DIR/TestVarConfigs/PropertySync_100.ini"
+SHELL "c:/Program Files/Epic Games/UE_5.1/Engine/Binaries/Win64/UnrealEditor.exe" "UNREAL_DIR/unreal_tests.uproject" -game -GAMEINI="UNREAL_DIR/TestVarConfigs/PropertySync_1000.ini"
