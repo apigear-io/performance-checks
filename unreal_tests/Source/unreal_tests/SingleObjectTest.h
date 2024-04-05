@@ -10,11 +10,13 @@
 #include <functional>
 #include "SyncIntMethodHandler.h"
 #include "SyncIntPropertyHandler.h"
+#include "TestBaseObject.h"
 #include "SingleObjectTest.generated.h"
 
 using chrono_hr_timepoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
 
 class UApiTestApi0OLinkClient;
+
 
 UCLASS(BlueprintType, config = Game)
 class UNREAL_TESTS_API USingleObjectTest : public UObject
@@ -26,9 +28,6 @@ public:
 
 	UFUNCTION()
 	void FinishTest();
-
-	UFUNCTION()
-	void AddStopTimePointPropertyInt(int number);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	class UCounter* propertyChangeCounter;
@@ -54,26 +53,13 @@ public:
 	*/
 	UPROPERTY(Config)
 	int TestOperationType = 0;
-	UPROPERTY()
-		USyncIntMethodHandler* m_syncMethodHandler = nullptr;
-	UPROPERTY()
-		USyncIntPropertyHandler* m_syncIntPropertyHandler = nullptr;
+
 private:
+	UPROPERTY()
+	TScriptInterface<ITestBaseObject> m_test= nullptr;
+
 	void configureExecuteOperation(UApiTestApi0OLinkClient* clientApi0);
 	UApiTestApi0OLinkClient* getClient0ApiSubsystem();
+
 	std::chrono::time_point<std::chrono::high_resolution_clock> begin;
-	std::vector<FString> messagesToSend;
-	std::function<void(int)> executeTestOperation;
-
-	//--------------------
-	void executeStringTest(int startNumber);
-	void executeFloatTest(int startNumber);
-	void executeAsyncPropertyIntTest(int startNumber);
-	void executeAsyncMethodIntTest(int startNumber);
-
-	// Points are used to measure latency - only valid for int type property, for which also TestOperationType can be chosen.
-	std::vector<chrono_hr_timepoint> m_startTimePoints;
-	std::vector<chrono_hr_timepoint> m_stopTimePoints;
-	std::vector<TSharedFuture<void>> m_futures;
-
 };

@@ -21,6 +21,11 @@ void USyncIntMethodHandler::start(int startValue)
 
 USyncIntMethodHandler::~USyncIntMethodHandler()
 {
+    cleanUp();
+}
+
+void USyncIntMethodHandler::cleanUp()
+{
     for (auto& future : m_futures)
     {
         future.Get();

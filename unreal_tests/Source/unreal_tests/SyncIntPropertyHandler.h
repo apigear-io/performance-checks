@@ -7,6 +7,7 @@
 #include <future>
 #include "Counter.h"
 #include "Generated/OLink/ApiTestApi0OLinkClient.h"
+#include "AbstractTestBase.h"
 #include "SyncIntPropertyHandler.generated.h"
 
 using chrono_hr_timepoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
@@ -24,13 +25,13 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSyncIntPropertyHandlerTaskEndedDelegate);
  * 
  */
 UCLASS()
-class UNREAL_TESTS_API USyncIntPropertyHandler : public UObject
+class UNREAL_TESTS_API USyncIntPropertyHandler : public UAbstractTestBase
 {
 	GENERATED_BODY()
 public:
     void initialize(UApiTestApi0OLinkClient* clientApi0, int messagesCount);
     /*Use this function to start executing set int property in a synchronous way*/
-    void start(int startValue);
+    void start(int startValue) override;
 
     UFUNCTION()
         void onPropertyChangeReceived(int number);
@@ -48,8 +49,8 @@ public:
     UPROPERTY(BlueprintReadWrite)
         int Threshold;
 
-    std::vector<chrono_hr_timepoint>& getStartPoints();
-    std::vector<chrono_hr_timepoint>& getStopPoints();
+    std::vector<chrono_hr_timepoint>& getStartPoints() override;
+    std::vector<chrono_hr_timepoint>& getStopPoints() override;
 
 private:
     UApiTestApi0OLinkClient* m_clientApi0;

@@ -4,13 +4,20 @@
 #include "SingleObjectTest.h"
 #include "Generated/OLink/ApiTestApi0OLinkClient.h"
 #include "Generated/api/AbstractApiTestApi0.h"
+#include "TestBaseObject.h"
+#include "AsyncIntMethodTest.h"
+#include "AsyncFloatPropertyTest.h"
+#include "AsyncIntPropertyTest.h"
+#include "AsyncStringPropertyTest.h"
+#include "Counter.h"
+
 #include <memory>
 #include <thread>
 #include <vector>
 #include <future>
 #include <chrono>
+
 #include "Logging/LogMacros.h"
-#include "Counter.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 
@@ -19,97 +26,103 @@
 static FString processMessageFunctionName = "FinishTest";
 ApiGear::FDelegateHandle quitGamedelegate;
 
+namespace {
 
-void calculateAndPrintLatencyParameters (const std::vector<chrono_hr_timepoint>& startPoints,
-                                         const std::vector<chrono_hr_timepoint>& stopPoints)
-{
-    uint64_t sum = 0;
-    uint32_t min = std::chrono::duration_cast<std::chrono::microseconds>(stopPoints[0] - startPoints[0]).count();
-    uint32_t max = 0;
-    for (size_t i = 0; i < startPoints.size(); i++)
+    void calculateAndPrintLatencyParameters(const std::vector<chrono_hr_timepoint>& startPoints,
+        const std::vector<chrono_hr_timepoint>& stopPoints)
     {
-        auto latency = std::chrono::duration_cast<std::chrono::microseconds>(stopPoints[i] - startPoints[i]).count();
-        sum = sum + latency;
-        if (min > latency) { min = latency; }
-        if (max < latency) { max = latency; }
-    }
-    auto mean = double(sum) / startPoints.size();
+        if (startPoints.size() == 0 || stopPoints.size() == 0)
+        {
+            return;
+        }
+        uint64_t sum = 0;
+        uint32_t min = std::chrono::duration_cast<std::chrono::microseconds>(stopPoints[0] - startPoints[0]).count();
+        uint32_t max = 0;
+        for (size_t i = 0; i < startPoints.size(); i++)
+        {
+            auto latency = std::chrono::duration_cast<std::chrono::microseconds>(stopPoints[i] - startPoints[i]).count();
+            sum = sum + latency;
+            if (min > latency) { min = latency; }
+            if (max < latency) { max = latency; }
+        }
+        auto mean = double(sum) / startPoints.size();
 
-    std::cout << "Latency[us]: mean " << std::fixed << std::setprecision(2) << mean << " max " <<max << " min " << min << std::endl;
-    UE_LOG(LogTemp, Warning, TEXT("Latency[us]: mean %f max %d min %d"), mean, max, min);
-}
-void prepareStringMessages(std::vector<FString>& messagesToSend, int messages_number)
-{
-    for (int msgNo = 0u; msgNo < messages_number; msgNo++)
+        std::cout << "Latency[us]: mean " << std::fixed << std::setprecision(2) << mean << " max " << max << " min " << min << std::endl;
+        UE_LOG(LogTemp, Warning, TEXT("Latency[us]: mean %f max %d min %d"), mean, max, min);
+    }
+
+
+    void subscribeForPropertyChanges(UApiTestApi0OLinkClient* clientApi0, UCounter* changesCounter)
     {
-        auto message = FString(std::string("Some longer property to be set, prepared before test for each message number to reduce allocating time in tests" + std::to_string(msgNo)).c_str());
-        messagesToSend.push_back(message);
+        clientApi0->_GetSignals_Implementation()->OnPropIntChanged.AddDynamic(changesCounter, &UCounter::increaseInt);
+        clientApi0->_GetSignals_Implementation()->OnPropFloatChanged.AddDynamic(changesCounter, &UCounter::increaseFloat);
+        clientApi0->_GetSignals_Implementation()->OnPropStringChanged.AddDynamic(changesCounter, &UCounter::increaseString);
+    }
+
+    void unsubscribePropertyChanges(UApiTestApi0OLinkClient* clientApi0, UCounter* changesCounter)
+    {
+        clientApi0->_GetSignals_Implementation()->OnPropIntChanged.RemoveDynamic(changesCounter, &UCounter::increaseInt);
+        clientApi0->_GetSignals_Implementation()->OnPropFloatChanged.RemoveDynamic(changesCounter, &UCounter::increaseFloat);
+        clientApi0->_GetSignals_Implementation()->OnPropStringChanged.RemoveDynamic(changesCounter, &UCounter::increaseString);
     }
 }
-
-
-void subscribeForPropertyChanges(UApiTestApi0OLinkClient* clientApi0,  UCounter* changesCounter) 
-{
-    clientApi0->_GetSignals_Implementation()->OnPropIntChanged.AddDynamic(changesCounter, &UCounter::increaseInt);
-    clientApi0->_GetSignals_Implementation()->OnPropFloatChanged.AddDynamic(changesCounter, &UCounter::increaseFloat);
-    clientApi0->_GetSignals_Implementation()->OnPropStringChanged.AddDynamic(changesCounter, &UCounter::increaseString);
-}
-
-void unsubscribePropertyChanges(UApiTestApi0OLinkClient* clientApi0, UCounter* changesCounter)
-{
-    clientApi0->_GetSignals_Implementation()->OnPropIntChanged.RemoveDynamic(changesCounter, &UCounter::increaseInt);
-    clientApi0->_GetSignals_Implementation()->OnPropFloatChanged.RemoveDynamic(changesCounter, &UCounter::increaseFloat);
-    clientApi0->_GetSignals_Implementation()->OnPropStringChanged.RemoveDynamic(changesCounter, &UCounter::increaseString);
-}
-
 
 void USingleObjectTest::configureExecuteOperation(UApiTestApi0OLinkClient* clientApi0)
 {
-    if (TestPropertyType == 0)
+    if (TestPropertyType == 0)// Int Data Type
     {
         std::cout << "Test for int property" << std::endl;
         if (TestOperationType == 0) // Set Property ASYNC
         {
             std::cout << "Property Async" << std::endl;
-            executeTestOperation = [this](int startNumber) { executeAsyncPropertyIntTest(startNumber); };
-            clientApi0->_GetSignals_Implementation()->OnPropIntChanged.AddDynamic(this, &USingleObjectTest::AddStopTimePointPropertyInt);
+            auto asyncIntPropertyHandler = NewObject<UAsyncIntPropertyTest>(this);
+            asyncIntPropertyHandler->initialize(clientApi0, RequestsPerThread, ThreadCount);
+
+            m_test.SetInterface(asyncIntPropertyHandler);
+            m_test.SetObject(asyncIntPropertyHandler);
+
         }
         else if (TestOperationType == 1)// Set Property SYNC
         {
             std::cout << "Property Sync" << std::endl;
-            m_syncIntPropertyHandler= NewObject<USyncIntPropertyHandler>(this, USyncIntPropertyHandler::StaticClass(), FName("USyncIntPropertyHandler"));
-            m_syncIntPropertyHandler->initialize(clientApi0, RequestsPerThread);// TODO only works for one thread now
-            executeTestOperation = [this](int startNumber) { m_syncIntPropertyHandler->start(startNumber); };
+            auto syncIntPropertyHandler = NewObject<USyncIntPropertyHandler>(this);
+            syncIntPropertyHandler->initialize(clientApi0, RequestsPerThread);// TODO only works for one thread now
+            m_test.SetInterface(syncIntPropertyHandler);
+            m_test.SetObject(syncIntPropertyHandler);
         }
         else if (TestOperationType == 2) // Call Method ASYNC
         {
             std::cout << "Method Async" << std::endl;
-            executeTestOperation = [this](int startNumber) {executeAsyncMethodIntTest(startNumber); };
+            auto asyncMethodTest = NewObject<UAsyncIntMethodTest>(this);
+            asyncMethodTest->initialize(clientApi0, propertyChangeCounter, RequestsPerThread, ThreadCount);
+            m_test.SetInterface(asyncMethodTest);
+            m_test.SetObject(asyncMethodTest);
         }
         else if (TestOperationType == 3)// Call Method SYNC
         {
             std::cout << "Method Sync" << std::endl;
-            m_syncMethodHandler= NewObject<USyncIntMethodHandler>(this, USyncIntMethodHandler::StaticClass(), FName("SyncIntMethodHandler"));
-            m_syncMethodHandler->initialize(clientApi0, propertyChangeCounter, RequestsPerThread);// TODO only works for one thread now
-            executeTestOperation = [this](int startNumber) { m_syncMethodHandler->start(startNumber); };
+            auto syncMethodHandler= NewObject<USyncIntMethodHandler>(this);
+            syncMethodHandler->initialize(clientApi0, propertyChangeCounter, RequestsPerThread);// TODO only works for one thread now
+            m_test.SetInterface(syncMethodHandler);
+            m_test.SetObject(syncMethodHandler);
         }
     }
     else if (TestPropertyType == 2)
     {
-        std::cout << "Test for float property" << std::endl;
-        executeTestOperation = [this](int startNumber) {executeFloatTest(startNumber); };
+        std::cout << "Test for float property, async" << std::endl;
+        auto floatPropTest = NewObject<UAsyncFloatPropertyTest>(this);
+        floatPropTest->initialize(clientApi0, RequestsPerThread, ThreadCount);
+        m_test.SetInterface(floatPropTest);
+        m_test.SetObject(floatPropTest);
     }
     else if (TestPropertyType == 1)
     {
-        std::cout << "Test for string property" << std::endl;
-        executeTestOperation = [this](int startNumber) {executeStringTest(startNumber); };
+        std::cout << "Test for string property, async" << std::endl;
+        auto stringPropTest = NewObject<UAsyncStringPropertyTest>(this);
+        stringPropTest->initialize(clientApi0, RequestsPerThread, ThreadCount);
+        m_test.SetInterface(stringPropTest);
+        m_test.SetObject(stringPropTest);
     }
-}
-
-void USingleObjectTest::AddStopTimePointPropertyInt(int number)
-{
-    int index = number - 1;
-    m_stopTimePoints[index] = std::chrono::high_resolution_clock::now();
 }
 
 void USingleObjectTest::Execute()
@@ -122,11 +135,6 @@ void USingleObjectTest::Execute()
     }
 
     auto messages_number = ThreadCount * RequestsPerThread;
-    prepareStringMessages(messagesToSend, messages_number);
-
-    m_startTimePoints= std::vector<chrono_hr_timepoint>(messages_number, chrono_hr_timepoint());
-    m_stopTimePoints =  std::vector<chrono_hr_timepoint>(messages_number, chrono_hr_timepoint());
-    m_futures.reserve(messages_number);
     
     propertyChangeCounter = NewObject<UCounter>(this, UCounter::StaticClass(), FName("propertyChangedCounter"));
     propertyChangeCounter->Threshold = messages_number;
@@ -141,10 +149,9 @@ void USingleObjectTest::Execute()
     for (int threadNo = 0; threadNo < ThreadCount; threadNo++)
     {
         auto sendMessagesTask = Async(EAsyncExecution::ThreadPool,
-            [clientApi0, this, threadNo]() {
-
+            [this, threadNo]() {
                 auto startNumber = threadNo * RequestsPerThread;
-                executeTestOperation(startNumber);
+                m_test->start(startNumber);
             });
         tasks.push_back(sendMessagesTask.Share());
     }
@@ -152,13 +159,6 @@ void USingleObjectTest::Execute()
     {
         task.Get();
     }
-}
-
-UApiTestApi0OLinkClient* USingleObjectTest::getClient0ApiSubsystem()
-{
-    auto gameInstance = UGameplayStatics::GetGameInstance(GetWorld());
-    UApiTestApi0OLinkClient* clientApi0 = gameInstance->GetSubsystem<UApiTestApi0OLinkClient>();
-    return clientApi0;
 }
 
 void USingleObjectTest::FinishTest()
@@ -171,87 +171,25 @@ void USingleObjectTest::FinishTest()
     std::cout << "Objects number: 1" << std::endl;
     std::cout << "Function execution number for each object: " << ThreadCount * RequestsPerThread << std::endl;
 
-    if (m_syncMethodHandler)
-    {
-        calculateAndPrintLatencyParameters(m_syncMethodHandler->getStartPoints(), m_syncMethodHandler->getStopPoints());
-    }
-    else if (m_syncIntPropertyHandler)
-    {
-        calculateAndPrintLatencyParameters(m_syncIntPropertyHandler->getStartPoints(), m_syncIntPropertyHandler->getStopPoints());
-    }
-    else 
-    {
-        calculateAndPrintLatencyParameters(m_startTimePoints, m_stopTimePoints);
-    }
+    calculateAndPrintLatencyParameters(m_test->getStartPoints(), m_test->getStopPoints());
 
     auto clientApi0 = getClient0ApiSubsystem();
     unsubscribePropertyChanges(clientApi0, propertyChangeCounter);
     propertyChangeCounter->OnThresholdReached.RemoveDynamic(this, &USingleObjectTest::FinishTest);
-    if (TestPropertyType == 0 && (TestOperationType == 0 || TestOperationType == 1))
-    {
-        clientApi0->_GetSignals_Implementation()->OnPropIntChanged.RemoveDynamic(this, &USingleObjectTest::AddStopTimePointPropertyInt);
-    }
-
 
     quitGamedelegate = ApiGearTicker::GetCoreTicker().AddTicker(*processMessageFunctionName, 0,
         [this](float /*param*/)
         {
-            for (auto& future : m_futures)
-            {
-                future.Get();
-            }
+            m_test->cleanUp();
             UKismetSystemLibrary::QuitGame(GetWorld(), nullptr, EQuitPreference::Quit, true);
             ApiGearTicker::GetCoreTicker().RemoveTicker(quitGamedelegate);
             return true;
         });
 }
 
-
-void USingleObjectTest::executeStringTest(int startNumber)
+UApiTestApi0OLinkClient* USingleObjectTest::getClient0ApiSubsystem()
 {
-    auto clientApi0 = getClient0ApiSubsystem();
-    for (auto i = 0; i < RequestsPerThread; i++)
-    {
-        auto number = startNumber + i;
-        clientApi0->Execute_SetPropString(clientApi0, messagesToSend[number]);
-    }
+    auto gameInstance = UGameplayStatics::GetGameInstance(GetWorld());
+    UApiTestApi0OLinkClient* clientApi0 = gameInstance->GetSubsystem<UApiTestApi0OLinkClient>();
+    return clientApi0;
 }
-void USingleObjectTest::executeFloatTest(int startNumber)
-{
-    auto clientApi0 = getClient0ApiSubsystem();
-    for (auto i = 0; i < RequestsPerThread; i++)
-    {
-        auto number = startNumber + i;
-        clientApi0->Execute_SetPropFloat(clientApi0, number + 1.0f + number / 1000.0f);
-    }
-}
-
-void USingleObjectTest::executeAsyncPropertyIntTest(int startNumber)
-{
-    auto clientApi0 = getClient0ApiSubsystem();
-    for (auto i = 0; i < RequestsPerThread; i++)
-    {
-        auto number = startNumber + i;
-        m_startTimePoints[number] = std::chrono::high_resolution_clock::now();
-        clientApi0->Execute_SetPropInt(clientApi0, number+1);
-    }
-}
-
-void USingleObjectTest::executeAsyncMethodIntTest(int startNumber)
-{
-    auto clientApi0 = getClient0ApiSubsystem();
-    for (auto i = 0; i < RequestsPerThread; i++)
-    {
-        auto number = startNumber + i;
-        m_futures.push_back(Async(EAsyncExecution::ThreadPool,
-            [number, clientApi0, this]()
-            {
-                m_startTimePoints[number] = std::chrono::high_resolution_clock::now();
-                clientApi0->Execute_FuncInt(clientApi0, number);
-                m_stopTimePoints[number] = std::chrono::high_resolution_clock::now();
-                propertyChangeCounter->increaseInt(number);
-            }).Share());
-    }
-}
-
-
