@@ -7,6 +7,7 @@
 #include <future>
 #include "Counter.h"
 #include "Generated/OLink/ApiTestApi0OLinkClient.h"
+#include "AbstractTestBase.h"
 #include "SyncIntMethodHandler.generated.h"
 
 using chrono_hr_timepoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
@@ -23,7 +24,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSyncIntMethodHandlerTaskEndedDelegate);
  * 
  */
 UCLASS()
-class UNREAL_TESTS_API USyncIntMethodHandler : public UObject
+class UNREAL_TESTS_API USyncIntMethodHandler : public UAbstractTestBase
 {
 	GENERATED_BODY()
 public:
@@ -31,8 +32,10 @@ public:
 
     ~USyncIntMethodHandler();
 
+    void cleanUp() override;
+
     /*Use this function to start executing int method in synchronous way*/
-    void start(int startValue);
+    void start(int startValue) override;
 
     UFUNCTION()
         void executeNextTask();
@@ -47,9 +50,9 @@ public:
     UPROPERTY(BlueprintReadWrite)
         int Threshold;
 
-    std::vector<chrono_hr_timepoint>& getStartPoints();
+    std::vector<chrono_hr_timepoint>& getStartPoints() override;
 
-    std::vector<chrono_hr_timepoint>& getStopPoints();
+    std::vector<chrono_hr_timepoint>& getStopPoints() override;
 
 private:
     UApiTestApi0OLinkClient* m_clientApi0;
