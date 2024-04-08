@@ -8,6 +8,7 @@ from olink.client.node import ClientNode
 import asyncio
 import sys
 import websockets
+import numpy as np
 from threading import Thread
 import time
 
@@ -30,15 +31,20 @@ class ClientTestInt:
     def __init__(self, messsages_per_thread, threads):
         self.messsages_per_thread = messsages_per_thread
         self.threads = threads
-        self.counter =  Counter(threads*messsages_per_thread)
+        total_msgs_nuber = threads*messsages_per_thread
+        self.counter =  Counter(total_msgs_nuber)
         self.is_test_done = False
         self.node = ClientNode()
         self.client = Client(self.node)
         self.sink = TestApi0Sink()
         self.is_ready_event = asyncio.Event()
         self.is_server_done = asyncio.Event()
+        self.start_times = np.zeros(total_msgs_nuber)
+        self.stop_times = np.zeros(total_msgs_nuber)
     
     def on_counter_increased(self, value):
+        number = value -1
+        self.stop_times[number] = time.time()
         self.counter.increase_count()
 
     def finish_test(self):
@@ -82,6 +88,12 @@ class ClientTestInt:
         self.client.disconnect()
         await connectTask
 
+        times = self.stop_times - self.start_times
+        print((times.sum()*1000000)/len(times))
+        print(times.max()*1000000)
+        print(times.min()*1000000)
+
+
         self.sink.on_prop_int_changed -= self.on_counter_increased
         self.counter.on_threshold -=  self.finish_test
         self.sink.on_is_ready-= self.update_is_ready
@@ -90,12 +102,13 @@ class ClientTestInt:
     def send_messages(self, thread_no, messages_num):
         for msg_no in range(messages_num):
             number = thread_no*messages_num + msg_no+ +1
+            self.start_times[number-1] = time.time()
             self.sink.set_prop_int(number)
 
 
 async def main():
     messsages_per_thread = 1000
-    threads = 10
+    threads = 1
     args = sys.argv[1:]
     if len(args) > 0:
         messsages_per_thread = args[0]
