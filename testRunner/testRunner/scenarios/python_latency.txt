@@ -1,0 +1,17 @@
+servers:
+CPP_BUILD/olink_single_server.exe
+clients:
+SHELL py PY_DIR/syncIntPropertyTest.py 1
+SHELL py PY_DIR/syncIntPropertyTest.py 10
+SHELL py PY_DIR/syncIntPropertyTest.py 100
+SHELL py PY_DIR/asyncIntPropertyTest.py 1
+SHELL py PY_DIR/asyncIntPropertyTest.py 10
+SHELL py PY_DIR/asyncIntPropertyTest.py 100
+SHELL py PY_DIR/syncIntMethodTest.py 1
+SHELL py PY_DIR/syncIntMethodTest.py 10 
+SHELL py PY_DIR/syncIntMethodTest.py 100
+SHELL py PY_DIR/syncIntMethodTest.py 1000
+SHELL py PY_DIR/asyncIntMethodTest.py 1
+SHELL py PY_DIR/asyncIntMethodTest.py 10
+SHELL py PY_DIR/asyncIntMethodTest.py 100
+SHELL py PY_DIR/asyncIntMethodTest.py 1000

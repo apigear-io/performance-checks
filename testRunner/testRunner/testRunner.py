@@ -14,7 +14,7 @@ SHELL = "SHELL"
 
 #requires CPP_BUILD and QT_BUILD to point to binaries
 class scenario:
-    def __init__(self, relative_file_path, cpp_build_path, qt_build_path, unreal_test_dir):
+    def __init__(self, relative_file_path, cpp_build_path, qt_build_path, unreal_test_dir, python_files_dir):
 
         self.servers = []
         self.clients = []
@@ -36,17 +36,18 @@ class scenario:
                 readingServers = False
                 readingClients = True
             elif  readingServers:
-                element = setPathsAndFormat(line, cpp_build_path, qt_build_path, unreal_test_dir)
+                element = setPathsAndFormat(line, cpp_build_path, qt_build_path, unreal_test_dir, python_files_dir)
                 self.servers.append(element)
             elif  readingClients:
-                element = setPathsAndFormat(line, cpp_build_path, qt_build_path, unreal_test_dir)
+                element = setPathsAndFormat(line, cpp_build_path, qt_build_path, unreal_test_dir, python_files_dir)
                 self.clients.append(element)
 
-def setPathsAndFormat(line, cpp_build_path, qt_build_path, unreal_test_dir):
+def setPathsAndFormat(line, cpp_build_path, qt_build_path, unreal_test_dir,python_files_dir):
     element = line.rstrip('\n');
     element = element.replace("CPP_BUILD", cpp_build_path);
     element = element.replace("QT_BUILD", qt_build_path);
     element = element.replace("UNREAL_DIR", unreal_test_dir);
+    element = element.replace("PY_DIR", python_files_dir);
     return element;
 
 #if file with given path doesnt exist it tries to remove the .exe postfix
@@ -98,10 +99,12 @@ def main():
         qt_build_path = args[2]
     if len(args) > 3:
         unreal_test_dir = args[3]
+    if len(args) > 4:
+        python_files_dir = args[4]
     
-    bin_paths = [cpp_build_path, qt_build_path, unreal_test_dir]
-    tech_mapping = {"cpp": cpp_build_path, "qt":qt_build_path, "unreal":unreal_test_dir}
-    current_scenario = scenario(scenarioPath, cpp_build_path, qt_build_path, unreal_test_dir);
+    bin_paths = [cpp_build_path, qt_build_path, unreal_test_dir, python_files_dir]
+    tech_mapping = {"cpp": cpp_build_path, "qt":qt_build_path, "unreal":unreal_test_dir, "py":python_files_dir}
+    current_scenario = scenario(scenarioPath, cpp_build_path, qt_build_path, unreal_test_dir, python_files_dir);
 
     print(current_scenario.servers)
     print(current_scenario.clients)
@@ -112,6 +115,7 @@ def main():
     for client in current_scenario.clients:
         client_args = prepareClientProcess(client, bin_paths);
         if len(client_args) == 0:
+            print("File doesn't exist: " + client)
             return 1
         for server in current_scenario.servers:
             server = removePostfixIfNoOriginalFile(server)
@@ -193,11 +197,25 @@ def getInfoFromOutput(lines, search_text):
             return outcome[1]
     return "0"
 
+def getInfoFromOutputTimeDuration(lines, search_text):
+    for line in lines:
+        if (line.find(search_text) != -1):
+            outcome = line.split(':')
+            time = outcome[1]
+            indexStart = outcome[0].find("[")
+            indexStop = outcome[0].find("]")
+            unit = "[?]"
+            if (indexStop != -1 and indexStart != -1 and indexStart<indexStop):
+                unit = outcome[0][indexStart:indexStop+1]
+            return unit, time.strip()
+    return "?" ,"?"
+
 def getLatencies(lines):
     for line in lines:
         if line.startswith("Latency"):
             outcome = line.split(' ')
             if len(outcome) > 6:
+                outcome = list(filter(None, outcome))
                 return True, outcome[2], outcome[4], outcome[6],
     return False, -1, -1, -1 
 
@@ -205,8 +223,8 @@ def format_for_output(test_info):
     output =   "client " + test_info["client"] 
     output+= " server " + test_info["server"]
     output+= " requests number " + str(test_info["requests"])
-    output+= " total time[ms] " +  str(test_info["total time"])
-    output+= " queries per ms " + str(round(test_info["queries per millisec"]*1000, 2))
+    output+= " total time"+ test_info["total time unit"]  +" "+  str(test_info["total time"])
+    #output+= " queries per ms " + str(round(test_info["queries per millisec"]*1000, 2))
     output+= " latency[us]: mean " +  str(test_info["latency mean"])
     output+= " max " + str(test_info["latency max"])
     output+= " min " +  str(test_info["latency min"])
@@ -215,30 +233,34 @@ def format_for_output(test_info):
     return output
 
 def get_csv_header():
-    return "client tech, server tech, requests number, total time[ms], queries per millisec, latency mean[us], latency max[us], latency min[us]"
+    #return "client tech, server tech, requests number, total time[ms], queries per millisec, latency mean[us], latency max[us], latency min[us]"
+    return "client tech, server tech, requests number, total time, unit, latency mean[us], latency max[us], latency min[us]"
 
 def format_to_csv(test_info):
-    return test_info["client"] + "," + test_info["server"] + "," + str(test_info["requests"]) + "," + str(test_info["total time"]) + "," + str(test_info["queries per millisec"]) + "," + str(test_info["latency mean"]) + "," + str(test_info["latency max"]) + "," + str(test_info["latency min"])
+    #return test_info["client"] + "," + test_info["server"] + "," + str(test_info["requests"]) + "," + str(test_info["total time"]) + "," + str(test_info["queries per millisec"]) + "," + str(test_info["latency mean"]) + "," + str(test_info["latency max"]) + "," + str(test_info["latency min"])
+    return test_info["client"] + "," + test_info["server"] + "," + str(test_info["requests"]) + "," + str(test_info["total time"]) + "," + test_info["total time unit"] + ","  + str(test_info["latency mean"]) + "," + str(test_info["latency max"]) + "," + str(test_info["latency min"])
 
 def prepareTestInfo(outcome_lines, server, client, tech_mapping):
 
     serverTechnology, serverName = getTechnologyAndName(server, tech_mapping)
     clientTechnology, clientName = getTechnologyAndName(client, tech_mapping)
 
-    testDuration = int(getInfoFromOutput(outcome_lines, TEST_TIME_SEARCH_TEXT).strip())
+    testDurationUnit, testDuration = getInfoFromOutputTimeDuration(outcome_lines, TEST_TIME_SEARCH_TEXT)
     mesagesNo = int(getInfoFromOutput(outcome_lines, EXECUTION_NUMBER_SEARCH_TEXT).strip())
     clientsNo = int(getInfoFromOutput(outcome_lines, CLIENT_NUMBER_SEARCH_TEXT).strip())
     isLatencyPresent, latency_mean, latency_max, latency_min = getLatencies(outcome_lines)
-    qpms = 0
-    if testDuration != 0 :
-        qpms = ((mesagesNo*clientsNo)/testDuration)
+    #qpms = 0
+    #testDuration
+    #if testDuration != 0 :
+    #    qpms = ((mesagesNo*clientsNo)/testDuration)
 
     testInfo = {
       "requests": mesagesNo,
+      "total time unit": testDurationUnit,
       "total time": testDuration, #[ms]
       "client": clientTechnology,
       "server": serverTechnology,
-      "queries per millisec": qpms,
+      #"queries per millisec": qpms,
       "clientName" : clientName,
       "serverName" : serverName,
       "isLatencyPresent" : isLatencyPresent,
