@@ -15,3 +15,15 @@ layers:
     output: ../qt/testApi
     template: ../template-qtcpp
     features: ["olink", "stubs", "mqtt"]
+  - name: unreal_tests
+    inputs:
+      - performance_interface100.module.yaml
+    output: ../unreal_tests/
+    template: ../../template-unreal-apigear
+    features: ["all"]
+  - name: python
+    inputs:
+      - performance_interface100.module.yaml
+    output: ../python/test_api
+    template: ../../template-python
+    features: ["all"]
