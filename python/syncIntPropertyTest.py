@@ -37,7 +37,7 @@ class SyncSender:
     def on_msg_received(self, value):
         #value is +1 than message number
         if value == self.startNumber + self.count + 1:
-            self.stop_times[self.count] = time.time()
+            self.stop_times[self.count] = time.perf_counter_ns()
             self.count += 1
             if (self.count == self.threshold):
                 self.on_response_received-= self.send_message
@@ -46,7 +46,7 @@ class SyncSender:
                 self.on_response_received.fire()
 
     def send_message(self):
-        self.start_times[self.count] = time.time()
+        self.start_times[self.count] = time.perf_counter_ns()
         self.sendFunction(self.startNumber + self.count + 1)
 
     async def start(self):
@@ -54,7 +54,7 @@ class SyncSender:
         await self.onFinished.wait()
 
     def getLatency(self):
-        times = (self.stop_times - self.start_times)*1000000
+        times = (self.stop_times - self.start_times)/1000
         average_latency = (times.sum())/len(times)
         max_latency = times.max()
         min_latency = times.min()
@@ -91,12 +91,12 @@ class SyncIntPropertyTest:
             self.sink.on_prop_int_changed+=thread_senders[thread].on_msg_received
         await self.is_ready_event.wait()
 
-        start = time.time()
+        start = time.perf_counter_ns()
         for thread in range(self.threadsNumber):
             thread_tasks.append( asyncio.create_task(thread_senders[thread].start()))
         await self.is_server_done.wait()
         await asyncio.wait(thread_tasks, return_when=asyncio.ALL_COMPLETED)
-        end = time.time()
+        end = time.perf_counter_ns()
 
         average = np.zeros(self.threadsNumber)
         l_max = np.zeros(self.threadsNumber)
@@ -110,7 +110,7 @@ class SyncIntPropertyTest:
             l_max[index] = partial_max
             l_min[index] = partial_min
             index+=1
-        print("Time measured [ms]: " + str(int((end - start)*1000)))
+        print("Time measured [ms]: " + "{:.2f}".format(int((end - start)/1000000)))
         print("Objects number: 1")
         print("Function execution number for each object: "+ str(self.threadsNumber*self.messsages_per_thread))
         print("Latency[us]: mean ", "{:.2f}".format((average.sum())/len(average)), " max ", "{:.2f}".format(l_max.max()), " min ", "{:.2f}".format(l_min.min()))

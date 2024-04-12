@@ -39,7 +39,7 @@ class AsyncIntPropertyTest:
         self.stop_times = np.zeros(total_msgs_nuber)
     
     def on_counter_increased(self, value):
-        self.stop_times[value-1] = time.time()
+        self.stop_times[value-1] = time.perf_counter_ns()
         self.counter.increase_count()
 
     def finish_test(self):
@@ -51,7 +51,7 @@ class AsyncIntPropertyTest:
     async def send_and_receive(self):
         await self.is_ready_event.wait()
         thread_tasks = []
-        start = time.time()
+        start = time.perf_counter_ns()
         for thread in range(self.threadsNumber):
             thread_tasks.append( Thread(target=self.send_messages, args=(thread, self.messsages_per_thread)))
         for thread in thread_tasks:
@@ -60,14 +60,14 @@ class AsyncIntPropertyTest:
 
         for thread in thread_tasks:
             thread.join()
-        end = time.time()
+        end = time.perf_counter_ns()
 
         times = self.stop_times - self.start_times
-        avg = (times.sum()*1000000)/len(times)
-        l_max = times.max()*1000000
-        l_min = times.min()*1000000
+        avg = (times.sum()/1000)/len(times)
+        l_max = times.max()/1000
+        l_min = times.min()/1000
 
-        print("Time measured [ms]: " + str(int((end - start)*1000)))
+        print("Time measured [ms]: " + "{:.2f}".format(int((end - start)/1000000)))
         print("Objects number: 1")
         print("Function execution number for each object: "+ str(self.threadsNumber*self.messsages_per_thread))
         print("Latency[us]: mean ", "{:.2f}".format(avg), " max ", "{:.2f}".format(l_max), " min ", "{:.2f}".format(l_min))
@@ -98,7 +98,7 @@ class AsyncIntPropertyTest:
     def send_messages(self, thread_no, messages_num):
         for msg_no in range(messages_num):
             number = thread_no*messages_num + msg_no+ +1
-            self.start_times[number-1] = time.time()
+            self.start_times[number-1] = time.perf_counter_ns()
             self.sink.set_prop_int(number)
 
 

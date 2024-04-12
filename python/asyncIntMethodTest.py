@@ -52,14 +52,14 @@ class AsyncMethodTest:
     async def send_and_receive(self):
         await self.is_ready_event.wait()
         thread_tasks = []
-        start = time.time_ns()
+        start = time.perf_counter_ns()
         for taskNo in range(self.threadsNumber):
             thread_tasks.append (asyncio.create_task(self.send_messages(taskNo, self.messsages_per_thread)))
 
         await asyncio.wait(thread_tasks, return_when=asyncio.ALL_COMPLETED)
         await asyncio.wait(self.messages_tasks, return_when=asyncio.ALL_COMPLETED)
         await self.is_server_done.wait()
-        end = time.time_ns()
+        end = time.perf_counter_ns()
 
         times = self.stop_times - self.start_times
         avg = (float((times.sum())/len(times)))/1000.0
@@ -68,12 +68,7 @@ class AsyncMethodTest:
 
 
         test_time = end-start
-        if test_time < 1000:
-            print("Time measured [ns]: " + str(test_time))
-        elif test_time < 1000000:
-            print("Time measured [us]: " + str(int(test_time/1000)))
-        else:
-            print("Time measured [ms]: " + str(int((end - start)/1000000)))
+        print("Time measured [ms]: " + "{:.2f}".format(int((end - start)/1000000)))
         print("Objects number: 1")
         print("Function execution number for each object: "+ str(self.threadsNumber*self.messsages_per_thread))
         print("Latency[us]: mean", "{:.2f}".format(avg), " max", "{:.2f}".format(l_max), " min", "{:.2f}".format(l_min))
@@ -101,13 +96,13 @@ class AsyncMethodTest:
     async def send_messages(self, thread_no, messages_num):
         for msg_no in range(messages_num):
             number = thread_no*messages_num + msg_no
-            self.start_times[number] = time.time_ns()
+            self.start_times[number] = time.perf_counter_ns()
             self.messages_tasks.append(asyncio.create_task(self.sink.func_int(number)))
             self.messages_tasks[msg_no].add_done_callback(self.method_finished)
 
     def method_finished(self, future):
         result = future.result()
-        self.stop_times[result] = time.time_ns()
+        self.stop_times[result] = time.perf_counter_ns()
         self.counter.increase_count()
 
 async def main():

@@ -50,20 +50,20 @@ class SyncIntMethodTest:
     async def send_and_receive(self):
         await self.is_ready_event.wait()
         thread_tasks = []
-        start = time.time()
+        start = time.perf_counter_ns()
         for taskNo in range(self.threadsNumber):
             thread_tasks.append (asyncio.create_task(self.send_messages(taskNo, self.messsages_per_thread)))
 
         await asyncio.wait(thread_tasks, return_when=asyncio.ALL_COMPLETED)
         await self.is_server_done.wait()
-        end = time.time()
+        end = time.perf_counter_ns()
 
         times = self.stop_times - self.start_times
-        avg = (times.sum()*1000000)/len(times)
-        l_max = times.max()*1000000
-        l_min = times.min()*1000000
+        avg = (times.sum()/1000)/len(times)
+        l_max = times.max()/1000
+        l_min = times.min()/1000
 
-        print("Time measured [ms]: " + str(int((end - start)*1000)))
+        print("Time measured [ms]: " + "{:.2f}".format(int((end - start)/1000000)))
         print("Objects number: 1")
         print("Function execution number for each object: "+ str(self.threadsNumber*self.messsages_per_thread))
         print("Latency[us]: mean ", "{:.2f}".format(avg), " max ", "{:.2f}".format(l_max), " min ", "{:.2f}".format(l_min))
@@ -92,7 +92,7 @@ class SyncIntMethodTest:
     async def send_messages(self, thread_no, messages_num):
         for msg_no in range(messages_num):
             number = thread_no*messages_num + msg_no
-            self.start_times[number] = time.time()
+            self.start_times[number] = time.perf_counter_ns()
             execution = self.sink.func_int(number)
             result = await execution
             if result != number:
@@ -100,7 +100,7 @@ class SyncIntMethodTest:
                 print(number)
                 print ("received")
                 print(result)
-            self.stop_times[result] = time.time()
+            self.stop_times[result] = time.perf_counter_ns()
             self.counter.increase_count()
 
 
