@@ -40,6 +40,18 @@ jobs:
         with:
           repository: apigear-io/template-cpp14
           path: template-cpp14
+      - name: create dir python template
+        run: mkdir template-python
+      - uses: actions/checkout@v3
+        with:
+          repository: apigear-io/template-python
+          path: template-python
+      - name: create dir unreal template
+        run: mkdir template-unreal
+      - uses: actions/checkout@v3
+        with:
+          repository: apigear-io/template-unreal
+          path: template-unreal
       - name: Install Go
         uses: actions/cache@v3
         with:
