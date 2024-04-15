@@ -60,8 +60,8 @@ You can play around with running this program with different messages number and
 int main(int argc, char* argv[])
 {
     std::vector<uint16_t> timePerMessage;
-    auto sendThreadNumber = 10u;
-    auto messages_number = 10u;
+    auto sendThreadNumber = 1u;
+    auto messages_number = 1000u;
     if (argc > 1)
     {
         char* p;
