@@ -118,61 +118,73 @@ def main():
             print("File doesn't exist: " + client)
             return 1
         for server in current_scenario.servers:
-            server = removePostfixIfNoOriginalFile(server)
-            if not os.path.isfile(server):
-                print("File doesn't exist: " + server)
-                return 1
             try:
-                server_proces = None
-                client_proces = None
-                server_proces = subprocess.Popen(server, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-                sleep(1)
+                server_process = None
+                client_process = None
+                isServerShellCommand = False
+                if server.strip().startswith(SHELL):
+                    isServerShellCommand = True      
+                    server = server[len(SHELL):len(server)].lstrip()
+                    print(server)
+                server = removePostfixIfNoOriginalFile(server)
+                if isServerShellCommand:
+                    server_process = subprocess.Popen(server, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                else:
+                    if not os.path.isfile(server):
+                        print("File doesn't exist: " + server)
+                        return 1
+                    server_process = subprocess.Popen(server, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)  
+                sleep(3)
                 if len(client_args) == 0:
-                    if server_proces != None:
-                        server_proces.kill()
+                    if server_process != None:
+                        server_process.kill()
                     print("client not found in line")
                     print(client)
                     return 1
                 if client_args[0].startswith(SHELL):
-                    client_proces = subprocess.Popen(client_args[1], shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                    client_process = subprocess.Popen(client_args[1], shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 else:
-                    client_proces = subprocess.Popen(client_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                    client_process = subprocess.Popen(client_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 try:
-                    server_proces.wait(150)
-                    client_proces.wait(150)
+                    client_process.wait(150)
                 except subprocess.TimeoutExpired:
-                    server_proces.kill()
-                    client_proces.kill()
+                    server_process.kill()
+                    client_process.kill()
                     print("Timeout for pair: ")
                     print(client)
-                    print(client_proces.communicate()[0].decode)
+                    print(client_process.communicate()[0].decode)
                     print(server)
-                    print(server_proces.communicate()[0].decode)
+                    print(server_process.communicate()[0].decode)
                     return 1
+
+                sleep(1)
+                if server_process.poll == None:
+                    server_process.kill()
             except Exception as e:
-                if server_proces != None:
-                    server_proces.kill()
-                if client_proces != None:
-                    client_proces.kill()
+                if server_process != None:
+                    server_process.kill()
+                if client_process != None:
+                    client_process.kill()
                 raise
-            server_outcome_lines = unify_delimeters_and_split(server_proces.communicate()[0].decode())
-            client_outcome_lines = unify_delimeters_and_split(client_proces.communicate()[0].decode())
-            if (len(server_outcome_lines[0]) == 0):
-                if server_proces != None:
-                    server_proces.kill()
-                print("someting went wrong when running " + server + " check if your exe can be run")
-                continue
+
+            if server_process != None:
+                server_process.kill()
+            else:
+                server_outcome_lines = unify_delimeters_and_split(server_process.communicate()[0].decode())
+                if (len(server_outcome_lines[0]) == 0):
+                    print("someting went wrong when running " + server + " check if your exe can be run")
+            client_outcome_lines = unify_delimeters_and_split(client_process.communicate()[0].decode())
             if (len(client_outcome_lines[0]) == 0):
                 print("someting went wrong when running " + client + ", check if your exe can be run")
-                if client_proces != None:
-                    client_proces.kill()
+                if client_process != None:
+                    client_process.kill()
                 continue
             test_info = prepareTestInfo(client_outcome_lines, server, client, tech_mapping)
             formated_line = format_for_output(test_info)
             print(formated_line)
             linesToWriteResult.append(formated_line)
             linesToWriteCsv.append(format_to_csv(test_info))
-            sleep(2)
+            sleep(5)
     scenarioPath = scenarioPath.split("/")
     reportfolderName = "reports"
 
