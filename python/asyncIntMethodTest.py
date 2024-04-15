@@ -1,5 +1,6 @@
 from asyncio.events import get_event_loop
 from os import startfile
+import threading
 from test_api.olink_client import Client
 from test_api.api_olink.sinks import TestApi0Sink
 from test_api.api_api.shared import EventHook
@@ -30,7 +31,6 @@ class AsyncMethodTest:
         self.threadsNumber = threads
         total_msgs_nuber = threads*messsages_per_thread
         self.counter =  Counter(total_msgs_nuber)
-        self.is_test_done = False
         self.node = ClientNode()
         self.client = Client(self.node)
         self.sink = TestApi0Sink()
@@ -66,8 +66,6 @@ class AsyncMethodTest:
         l_max = float(times.max())/1000.0
         l_min = float(times.min())/1000.0
 
-
-        test_time = end-start
         print("Time measured [ms]: " + "{:.2f}".format(int((end - start)/1000000)))
         print("Objects number: 1")
         print("Function execution number for each object: "+ str(self.threadsNumber*self.messsages_per_thread))
@@ -98,7 +96,7 @@ class AsyncMethodTest:
             number = thread_no*messages_num + msg_no
             self.start_times[number] = time.perf_counter_ns()
             self.messages_tasks.append(asyncio.create_task(self.sink.func_int(number)))
-            self.messages_tasks[msg_no].add_done_callback(self.method_finished)
+            self.messages_tasks[number].add_done_callback(self.method_finished)
 
     def method_finished(self, future):
         result = future.result()
