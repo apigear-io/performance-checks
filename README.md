@@ -33,7 +33,7 @@ The Mqtt tests are using extra message send by client.
 ## Running tests locally
 1. Download this repository
 2. Use APIGEAR to generate the code (for now it generates cpp and qt test objects), see the solution file apigear\performance.solution.yaml
-3. Build projects cpp/CMakeLists.txt and qt/CMakeLists.txt
+3. Build projects cpp/CMakeLists.txt and qt/CMakeLists.txt 
 
 Now you can either run manually pair server and client (you can mix cpp and qt, but you cannot mix features mqtt and olink).
 You can use your profiling tool for that.
@@ -46,6 +46,14 @@ Use test runner with test scenarios.
 The test runner is located in "testRunner/testRunner", scenarios are under "testRunner/testRunner/scenarios".
 The test runner executes all listed executables with their arguments in a scenario: servers and clients. At one time only one server with and client is run - the runner waits till each pair finishes the work and then runs next one - all servers are run with all the clients.
 
+### Test runner arguments
+Test runner requires some arguments to start:
+1. test scenario
+2. path to binaries for cpp (use "" if not needed for scenario, and you need any of next arguments)
+3. path to qt bineries (use "" if not needed for scenario, and you need any of next arguments)
+4. path to unreal binaries (use "" if not needed for scenario, and you need any of next arguments)
+5. path to python binaries 
+
 Running a test runner from a root of this repository:
 on windows:
 py testRunner/testRunner/testRunner.py "testRunner/testRunner/scenarios/olink_single_object_setProperty.txt" "relative-path-to-cpp-executables-used-by-scenario" "relative-path-to-qt-executables-used-by-scenario"
@@ -54,6 +62,11 @@ python testRunner/testRunner/testRunner.py "testRunner/testRunner/scenarios/olin
 
 Have in mind that you need to make sure that executables find all the necessary dlls (either set paths for them or just copy the dlls into the folders). Test runner produces reports in main directory.
 
+### Unreal scenarios
+Unreal (and python) clients are executed exactely with the line that is in the scenario, and the line needs to start with `SHELL`
+One option of running a unreal scenario is running unbaked version, from a uproject: with -game option.
+You can provide the game ini config, to change parameters of the test. An example line in the scenario could look like that:
+`SHELL "Path-to-your-unreal-editor/UnrealEditor.exe" "UNREAL_DIR/unreal_tests.uproject" -game -GAMEINI="UNREAL_DIR/TestVarConfigs/MethodAsync_10.ini"`
 
 ### Changing an API
 Real object with network layer are used for tests.
