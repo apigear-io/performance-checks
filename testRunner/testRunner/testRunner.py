@@ -14,7 +14,7 @@ SHELL = "SHELL"
 
 #requires CPP_BUILD and QT_BUILD to point to binaries
 class scenario:
-    def __init__(self, relative_file_path, cpp_build_path, qt_build_path, unreal_test_dir, python_files_dir):
+    def __init__(self, relative_file_path, tech_mapping):
 
         self.servers = []
         self.clients = []
@@ -36,18 +36,22 @@ class scenario:
                 readingServers = False
                 readingClients = True
             elif  readingServers:
-                element = setPathsAndFormat(line, cpp_build_path, qt_build_path, unreal_test_dir, python_files_dir)
+                element = setPathsAndFormat(line, tech_mapping)
                 self.servers.append(element)
             elif  readingClients:
-                element = setPathsAndFormat(line, cpp_build_path, qt_build_path, unreal_test_dir, python_files_dir)
+                element = setPathsAndFormat(line, tech_mapping)
                 self.clients.append(element)
 
-def setPathsAndFormat(line, cpp_build_path, qt_build_path, unreal_test_dir,python_files_dir):
+def setPathsAndFormat(line, tech_mapping):
     element = line.rstrip('\n');
-    element = element.replace("CPP_BUILD", cpp_build_path);
-    element = element.replace("QT_BUILD", qt_build_path);
-    element = element.replace("UNREAL_DIR", unreal_test_dir);
-    element = element.replace("PY_DIR", python_files_dir);
+    if "cpp" in tech_mapping.keys() and element.find("CPP_BUILD") != -1:
+        element = element.replace("CPP_BUILD", tech_mapping["cpp"])
+    elif "qt" in tech_mapping.keys() and element.find("QT_BUILD") != -1:
+        element = element.replace("QT_BUILD", tech_mapping["qt"])
+    elif "unreal" in tech_mapping.keys() and element.find("UNREAL_DIR") != -1:
+        element = element.replace("UNREAL_DIR",tech_mapping["unreal"])
+    elif "py" in tech_mapping.keys() and element.find("PY_DIR") != -1:
+        element = element.replace("PY_DIR", tech_mapping["py"])
     return element;
 
 #if file with given path doesnt exist it tries to remove the .exe postfix
@@ -85,26 +89,20 @@ def prepareClientProcess(client_line, paths):
         words = [SHELL, (' '.join(words))]
     return words
 
+
+
 def main():
-    scenarioPath =""
-    cpp_build_path = ""
-    qt_build_path = ""
-    unreal_test_dir = ""
+    
+    scenarioPath =""    
     args = sys.argv[1:]
     if len(args) > 0:
         scenarioPath = args[0]
-    if len(args) > 1:
-        cpp_build_path = args[1]
-    if len(args) > 2:
-        qt_build_path = args[2]
-    if len(args) > 3:
-        unreal_test_dir = args[3]
-    if len(args) > 4:
-        python_files_dir = args[4]
-    
-    bin_paths = [cpp_build_path, qt_build_path, unreal_test_dir, python_files_dir]
-    tech_mapping = {"cpp": cpp_build_path, "qt":qt_build_path, "unreal":unreal_test_dir, "py":python_files_dir}
-    current_scenario = scenario(scenarioPath, cpp_build_path, qt_build_path, unreal_test_dir, python_files_dir);
+    else:
+        print("no scenrio to run")
+        return -1
+    bin_paths, tech_mapping = getPathsFromArgumets(args)
+
+    current_scenario = scenario(scenarioPath, tech_mapping);
 
     print(current_scenario.servers)
     print(current_scenario.clients)
@@ -197,6 +195,35 @@ def main():
     csv_report = open(reportfolderName +"/"+"csv_"+resultFileName,'w')
     csv_report.writelines(line + '\n' for line in linesToWriteCsv)
     return 0
+
+
+def getPathsFromArgumets(args):
+
+    bin_paths =[]
+    tech_mapping = {}
+
+    if len(args) > 1:
+        cpp_build_path = args[1]
+        if (len(cpp_build_path.strip()) != 0 ):
+            bin_paths.append(cpp_build_path)
+            tech_mapping["cpp"] = cpp_build_path
+    if len(args) > 2:
+        qt_build_path = args[2]
+        if (len(qt_build_path.strip()) != 0 ):
+            bin_paths.append(qt_build_path)
+            tech_mapping["qt"] = qt_build_path
+    if len(args) > 3:
+        unreal_test_dir = args[3]
+        if (len(unreal_test_dir.strip()) != 0 ):
+            bin_paths.append(unreal_test_dir)
+            tech_mapping["unreal"] = unreal_test_dir
+    if len(args) > 4:
+        python_files_dir = args[4]
+        if (len(python_files_dir.strip()) != 0 ):
+            bin_paths.append(python_files_dir)
+            tech_mapping["py"] = python_files_dir
+    
+    return bin_paths, tech_mapping
 
 # On Linux delimeter is only \n, replacing \r\n with \n makes split work on Linux and Windows platform
 def unify_delimeters_and_split(lines):
