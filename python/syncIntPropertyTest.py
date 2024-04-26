@@ -119,7 +119,7 @@ class SyncIntPropertyTest:
         
         self.node.link_remote(self.sink.olink_object_name())
         self.sink.on_prop_int_changed += self.on_counter_increased
-        self.sink.on_is_ready+= self.update_is_ready
+        self.sink._on_is_ready+= self.update_is_ready
         self.counter.on_threshold +=  self.finish_test
         
         connectTask =  asyncio.create_task( self.client.connect('ws://localhost:8000/ws'));
@@ -133,7 +133,7 @@ class SyncIntPropertyTest:
 
         self.sink.on_prop_int_changed -= self.on_counter_increased
         self.counter.on_threshold -=  self.finish_test
-        self.sink.on_is_ready-= self.update_is_ready
+        self.sink._on_is_ready-= self.update_is_ready
 
 
     def send_message(self, msg_value):

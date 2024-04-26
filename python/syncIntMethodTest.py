@@ -73,7 +73,7 @@ class SyncIntMethodTest:
     async def execute(self):        
         self.node.link_remote(self.sink.olink_object_name())
     
-        self.sink.on_is_ready+= self.update_is_ready
+        self.sink._on_is_ready+= self.update_is_ready
         self.counter.on_threshold +=  self.finish_test
         
         connectTask =  asyncio.create_task( self.client.connect('ws://localhost:8000/ws'));
@@ -86,7 +86,7 @@ class SyncIntMethodTest:
 
         
         self.counter.on_threshold -=  self.finish_test
-        self.sink.on_is_ready-= self.update_is_ready
+        self.sink._on_is_ready-= self.update_is_ready
 
 
     async def send_messages(self, thread_no, messages_num):
