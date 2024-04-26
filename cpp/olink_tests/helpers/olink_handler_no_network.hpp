@@ -4,13 +4,19 @@
 #include "olink/clientregistry.h"
 #include <string>
 #include <memory>
+#include <iostream>
 
 class OLinkHandlerNoConnection
 {
 public:
     OLinkHandlerNoConnection(std::shared_ptr<ApiGear::ObjectLink::ClientNode> client_node)
         :m_client_node(client_node)
-    {}
+    
+    {
+        m_client_node->setLogLevel(ApiGear::ObjectLink::LogLevel::Warning);
+        ApiGear::ObjectLink::WriteLogFunc log = [](auto lvl, auto& msg) { if (lvl <= ApiGear::ObjectLink::LogLevel::Warning) std::cout << msg << std::endl; };
+        m_client_node->onLog(log);
+    }
 
     void prepareConnection(){}
 

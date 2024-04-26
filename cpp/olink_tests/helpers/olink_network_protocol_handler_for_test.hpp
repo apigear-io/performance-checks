@@ -7,6 +7,7 @@
 #include <string>
 #include <iostream>
 #include <memory>
+#include "apigear/olink/olinklogadapter.h"
 
 
 
@@ -23,6 +24,9 @@ public:
         auto full_address = "ws://" + m_hostAddress + ":" + std::to_string(m_portNumber) + "/ws";
         m_client = std::make_unique<ApiGear::PocoImpl::OlinkConnection>(registry);
         m_client->connectToHost(Poco::URI(full_address));
+        m_client->node()->setLogLevel(ApiGear::ObjectLink::LogLevel::Warning);
+        ApiGear::ObjectLink::WriteLogFunc log = [](auto lvl,  auto& msg) { if (lvl <= ApiGear::ObjectLink::LogLevel::Warning) std::cout << msg << std::endl; };
+        m_client->node()->onLog(log);
     }
 
     template<class TestData>
