@@ -41,7 +41,7 @@ public:
     std::vector<chrono_hr_timepoint>& m_latenciesStart;
     std::vector<chrono_hr_timepoint>& m_latenciesStop;
 
-    uint32_t count=0;
+    std::atomic<uint32_t> count = { 0 };
     std::shared_ptr<Cpp::Api::olink::TestApi0Client> olinkClient;
     std::shared_ptr<InspectedSink> sink;
 };
@@ -55,7 +55,7 @@ int main(int argc, char* argv[])
 {
     std::vector<uint16_t> timePerMessage;
     auto sendThreadNumber = 1u;
-    auto messages_number = 100u;
+    auto messages_number = 1000u;
     if (argc > 1)
     {
         char* p;
@@ -74,7 +74,7 @@ int main(int argc, char* argv[])
     std::vector<chrono_hr_timepoint> m_latenciesStart(total_messages_number, chrono_hr_timepoint());
     std::vector<chrono_hr_timepoint> m_latenciesStop(total_messages_number, chrono_hr_timepoint());
 
-    auto testObject = PropertyIntTestData(m_latenciesStart, m_latenciesStop);
+    PropertyIntTestData testObject(m_latenciesStart, m_latenciesStop);
     executeTestFunction(testObject, olinkProtocolHandler, messages_number, sendThreadNumber);
     
     calculateAndPrintLatencyParameters(m_latenciesStart, m_latenciesStop);
