@@ -31,8 +31,8 @@ public:
 
         auto task = std::async(std::launch::async, [this, value]()
             {
-                 olinkClient->funcInt(value);
-                 m_latenciesStop[value] = std::chrono::high_resolution_clock::now();
+                 auto res = olinkClient->funcInt(value);
+                 m_latenciesStop[res] = std::chrono::high_resolution_clock::now();
                  isAllReceived++;
             });
 
@@ -41,7 +41,7 @@ public:
 
     bool allResponsesReceived (uint32_t sentRequestsNumber) const
     {
-        return isAllReceived == sentRequestsNumber;
+        return isAllReceived >= sentRequestsNumber;
     }
 
     std::vector<chrono_hr_timepoint>& m_latenciesStart;
