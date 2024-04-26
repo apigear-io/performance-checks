@@ -14,7 +14,7 @@ SHELL = "SHELL"
 
 #requires CPP_BUILD and QT_BUILD to point to binaries
 class scenario:
-    def __init__(self, relative_file_path, cpp_build_path, qt_build_path, unreal_test_dir):
+    def __init__(self, relative_file_path, tech_mapping):
 
         self.servers = []
         self.clients = []
@@ -36,17 +36,22 @@ class scenario:
                 readingServers = False
                 readingClients = True
             elif  readingServers:
-                element = setPathsAndFormat(line, cpp_build_path, qt_build_path, unreal_test_dir)
+                element = setPathsAndFormat(line, tech_mapping)
                 self.servers.append(element)
             elif  readingClients:
-                element = setPathsAndFormat(line, cpp_build_path, qt_build_path, unreal_test_dir)
+                element = setPathsAndFormat(line, tech_mapping)
                 self.clients.append(element)
 
-def setPathsAndFormat(line, cpp_build_path, qt_build_path, unreal_test_dir):
+def setPathsAndFormat(line, tech_mapping):
     element = line.rstrip('\n');
-    element = element.replace("CPP_BUILD", cpp_build_path);
-    element = element.replace("QT_BUILD", qt_build_path);
-    element = element.replace("UNREAL_DIR", unreal_test_dir);
+    if "cpp" in tech_mapping.keys() and element.find("CPP_BUILD") != -1:
+        element = element.replace("CPP_BUILD", tech_mapping["cpp"])
+    elif "qt" in tech_mapping.keys() and element.find("QT_BUILD") != -1:
+        element = element.replace("QT_BUILD", tech_mapping["qt"])
+    elif "unreal" in tech_mapping.keys() and element.find("UNREAL_DIR") != -1:
+        element = element.replace("UNREAL_DIR",tech_mapping["unreal"])
+    elif "py" in tech_mapping.keys() and element.find("PY_DIR") != -1:
+        element = element.replace("PY_DIR", tech_mapping["py"])
     return element;
 
 #if file with given path doesnt exist it tries to remove the .exe postfix
@@ -84,24 +89,20 @@ def prepareClientProcess(client_line, paths):
         words = [SHELL, (' '.join(words))]
     return words
 
+
+
 def main():
-    scenarioPath =""
-    cpp_build_path = ""
-    qt_build_path = ""
-    unreal_test_dir = ""
+    
+    scenarioPath =""    
     args = sys.argv[1:]
     if len(args) > 0:
         scenarioPath = args[0]
-    if len(args) > 1:
-        cpp_build_path = args[1]
-    if len(args) > 2:
-        qt_build_path = args[2]
-    if len(args) > 3:
-        unreal_test_dir = args[3]
-    
-    bin_paths = [cpp_build_path, qt_build_path, unreal_test_dir]
-    tech_mapping = {"cpp": cpp_build_path, "qt":qt_build_path, "unreal":unreal_test_dir}
-    current_scenario = scenario(scenarioPath, cpp_build_path, qt_build_path, unreal_test_dir);
+    else:
+        print("no scenrio to run")
+        return -1
+    bin_paths, tech_mapping = getPathsFromArgumets(args)
+
+    current_scenario = scenario(scenarioPath, tech_mapping);
 
     print(current_scenario.servers)
     print(current_scenario.clients)
@@ -112,63 +113,76 @@ def main():
     for client in current_scenario.clients:
         client_args = prepareClientProcess(client, bin_paths);
         if len(client_args) == 0:
+            print("File doesn't exist: " + client)
             return 1
         for server in current_scenario.servers:
-            server = removePostfixIfNoOriginalFile(server)
-            if not os.path.isfile(server):
-                print("File doesn't exist: " + server)
-                return 1
             try:
-                server_proces = None
-                client_proces = None
-                server_proces = subprocess.Popen(server, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-                sleep(1)
+                server_process = None
+                client_process = None
+                isServerShellCommand = False
+                if server.strip().startswith(SHELL):
+                    isServerShellCommand = True      
+                    server = server[len(SHELL):len(server)].lstrip()
+                    print(server)
+                server = removePostfixIfNoOriginalFile(server)
+                if isServerShellCommand:
+                    server_process = subprocess.Popen(server, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                else:
+                    if not os.path.isfile(server):
+                        print("File doesn't exist: " + server)
+                        return 1
+                    server_process = subprocess.Popen(server, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)  
+                sleep(3)
                 if len(client_args) == 0:
-                    if server_proces != None:
-                        server_proces.kill()
+                    if server_process != None:
+                        server_process.kill()
                     print("client not found in line")
                     print(client)
                     return 1
                 if client_args[0].startswith(SHELL):
-                    client_proces = subprocess.Popen(client_args[1], shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                    client_process = subprocess.Popen(client_args[1], shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 else:
-                    client_proces = subprocess.Popen(client_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                    client_process = subprocess.Popen(client_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 try:
-                    server_proces.wait(150)
-                    client_proces.wait(150)
+                    client_process.wait(150)
                 except subprocess.TimeoutExpired:
-                    server_proces.kill()
-                    client_proces.kill()
+                    server_process.kill()
+                    client_process.kill()
                     print("Timeout for pair: ")
                     print(client)
-                    print(client_proces.communicate()[0].decode)
+                    print(client_process.communicate()[0].decode)
                     print(server)
-                    print(server_proces.communicate()[0].decode)
+                    print(server_process.communicate()[0].decode)
                     return 1
+
+                sleep(1)
+                if server_process.poll == None:
+                    server_process.kill()
             except Exception as e:
-                if server_proces != None:
-                    server_proces.kill()
-                if client_proces != None:
-                    client_proces.kill()
+                if server_process != None:
+                    server_process.kill()
+                if client_process != None:
+                    client_process.kill()
                 raise
-            server_outcome_lines = unify_delimeters_and_split(server_proces.communicate()[0].decode())
-            client_outcome_lines = unify_delimeters_and_split(client_proces.communicate()[0].decode())
-            if (len(server_outcome_lines[0]) == 0):
-                if server_proces != None:
-                    server_proces.kill()
-                print("someting went wrong when running " + server + " check if your exe can be run")
-                continue
+
+            if server_process != None:
+                server_process.kill()
+            else:
+                server_outcome_lines = unify_delimeters_and_split(server_process.communicate()[0].decode())
+                if (len(server_outcome_lines[0]) == 0):
+                    print("someting went wrong when running " + server + " check if your exe can be run")
+            client_outcome_lines = unify_delimeters_and_split(client_process.communicate()[0].decode())
             if (len(client_outcome_lines[0]) == 0):
                 print("someting went wrong when running " + client + ", check if your exe can be run")
-                if client_proces != None:
-                    client_proces.kill()
+                if client_process != None:
+                    client_process.kill()
                 continue
             test_info = prepareTestInfo(client_outcome_lines, server, client, tech_mapping)
             formated_line = format_for_output(test_info)
             print(formated_line)
             linesToWriteResult.append(formated_line)
             linesToWriteCsv.append(format_to_csv(test_info))
-            sleep(2)
+            sleep(5)
     scenarioPath = scenarioPath.split("/")
     reportfolderName = "reports"
 
@@ -182,6 +196,35 @@ def main():
     csv_report.writelines(line + '\n' for line in linesToWriteCsv)
     return 0
 
+
+def getPathsFromArgumets(args):
+
+    bin_paths =[]
+    tech_mapping = {}
+
+    if len(args) > 1:
+        cpp_build_path = args[1]
+        if (len(cpp_build_path.strip()) != 0 ):
+            bin_paths.append(cpp_build_path)
+            tech_mapping["cpp"] = cpp_build_path
+    if len(args) > 2:
+        qt_build_path = args[2]
+        if (len(qt_build_path.strip()) != 0 ):
+            bin_paths.append(qt_build_path)
+            tech_mapping["qt"] = qt_build_path
+    if len(args) > 3:
+        unreal_test_dir = args[3]
+        if (len(unreal_test_dir.strip()) != 0 ):
+            bin_paths.append(unreal_test_dir)
+            tech_mapping["unreal"] = unreal_test_dir
+    if len(args) > 4:
+        python_files_dir = args[4]
+        if (len(python_files_dir.strip()) != 0 ):
+            bin_paths.append(python_files_dir)
+            tech_mapping["py"] = python_files_dir
+    
+    return bin_paths, tech_mapping
+
 # On Linux delimeter is only \n, replacing \r\n with \n makes split work on Linux and Windows platform
 def unify_delimeters_and_split(lines):
     return lines.replace('\r\n', '\n').split('\n')
@@ -193,11 +236,25 @@ def getInfoFromOutput(lines, search_text):
             return outcome[1]
     return "0"
 
+def getInfoFromOutputTimeDuration(lines, search_text):
+    for line in lines:
+        if (line.find(search_text) != -1):
+            outcome = line.split(':')
+            time = outcome[1]
+            indexStart = outcome[0].find("[")
+            indexStop = outcome[0].find("]")
+            unit = "[?]"
+            if (indexStop != -1 and indexStart != -1 and indexStart<indexStop):
+                unit = outcome[0][indexStart:indexStop+1]
+            return unit, time.strip()
+    return "?" ,"?"
+
 def getLatencies(lines):
     for line in lines:
         if line.startswith("Latency"):
             outcome = line.split(' ')
             if len(outcome) > 6:
+                outcome = list(filter(None, outcome))
                 return True, outcome[2], outcome[4], outcome[6],
     return False, -1, -1, -1 
 
@@ -205,8 +262,8 @@ def format_for_output(test_info):
     output =   "client " + test_info["client"] 
     output+= " server " + test_info["server"]
     output+= " requests number " + str(test_info["requests"])
-    output+= " total time[ms] " +  str(test_info["total time"])
-    output+= " queries per ms " + str(round(test_info["queries per millisec"]*1000, 2))
+    output+= " total time"+ test_info["total time unit"]  +" "+  str(test_info["total time"])
+    #output+= " queries per ms " + str(round(test_info["queries per millisec"]*1000, 2))
     output+= " latency[us]: mean " +  str(test_info["latency mean"])
     output+= " max " + str(test_info["latency max"])
     output+= " min " +  str(test_info["latency min"])
@@ -215,30 +272,34 @@ def format_for_output(test_info):
     return output
 
 def get_csv_header():
-    return "client tech, server tech, requests number, total time[ms], queries per millisec, latency mean[us], latency max[us], latency min[us]"
+    #return "client tech, server tech, requests number, total time[ms], queries per millisec, latency mean[us], latency max[us], latency min[us]"
+    return "client tech, server tech, requests number, total time, unit, latency mean[us], latency max[us], latency min[us]"
 
 def format_to_csv(test_info):
-    return test_info["client"] + "," + test_info["server"] + "," + str(test_info["requests"]) + "," + str(test_info["total time"]) + "," + str(test_info["queries per millisec"]) + "," + str(test_info["latency mean"]) + "," + str(test_info["latency max"]) + "," + str(test_info["latency min"])
+    #return test_info["client"] + "," + test_info["server"] + "," + str(test_info["requests"]) + "," + str(test_info["total time"]) + "," + str(test_info["queries per millisec"]) + "," + str(test_info["latency mean"]) + "," + str(test_info["latency max"]) + "," + str(test_info["latency min"])
+    return test_info["client"] + "," + test_info["server"] + "," + str(test_info["requests"]) + "," + str(test_info["total time"]) + "," + test_info["total time unit"] + ","  + str(test_info["latency mean"]) + "," + str(test_info["latency max"]) + "," + str(test_info["latency min"])
 
 def prepareTestInfo(outcome_lines, server, client, tech_mapping):
 
     serverTechnology, serverName = getTechnologyAndName(server, tech_mapping)
     clientTechnology, clientName = getTechnologyAndName(client, tech_mapping)
 
-    testDuration = int(getInfoFromOutput(outcome_lines, TEST_TIME_SEARCH_TEXT).strip())
+    testDurationUnit, testDuration = getInfoFromOutputTimeDuration(outcome_lines, TEST_TIME_SEARCH_TEXT)
     mesagesNo = int(getInfoFromOutput(outcome_lines, EXECUTION_NUMBER_SEARCH_TEXT).strip())
     clientsNo = int(getInfoFromOutput(outcome_lines, CLIENT_NUMBER_SEARCH_TEXT).strip())
     isLatencyPresent, latency_mean, latency_max, latency_min = getLatencies(outcome_lines)
-    qpms = 0
-    if testDuration != 0 :
-        qpms = ((mesagesNo*clientsNo)/testDuration)
+    #qpms = 0
+    #testDuration
+    #if testDuration != 0 :
+    #    qpms = ((mesagesNo*clientsNo)/testDuration)
 
     testInfo = {
       "requests": mesagesNo,
+      "total time unit": testDurationUnit,
       "total time": testDuration, #[ms]
       "client": clientTechnology,
       "server": serverTechnology,
-      "queries per millisec": qpms,
+      #"queries per millisec": qpms,
       "clientName" : clientName,
       "serverName" : serverName,
       "isLatencyPresent" : isLatencyPresent,
