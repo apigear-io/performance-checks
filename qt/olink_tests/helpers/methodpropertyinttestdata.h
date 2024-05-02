@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <iostream>
 #include <iomanip>
+#include <QFuture>
 
 class MethodPropertyIntTestData : public QObject
 {
@@ -20,11 +21,8 @@ public:
     std::shared_ptr<TestSink> sink;
 
     virtual void testFunction(uint32_t value) = 0;
-signals:
-    void executeFunctionSignal(uint32_t value);
 
-public slots:
-    void testFunctionSlot(uint32_t value);
+    void testFunctionBase(uint32_t value);
 
 protected:
     std::atomic<uint32_t> receivedMsgs{0u};
@@ -44,6 +42,8 @@ class AsyncMethodPropertyIntTestData :public MethodPropertyIntTestData
 public:
     AsyncMethodPropertyIntTestData(std::vector<uint32_t>& latencies);
     void testFunction(uint32_t value) override;
+
+    std::vector<QFuture<void>> m_futures;
 };
 
 #endif // SYNCMETHODPROPERTYINTTESTDATA_H
