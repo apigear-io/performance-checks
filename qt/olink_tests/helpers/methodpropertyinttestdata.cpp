@@ -10,13 +10,13 @@
 #include <algorithm>
 #include <iostream>
 #include <iomanip>
+#include <QtConcurrent>
 
 
 MethodPropertyIntTestData::MethodPropertyIntTestData(std::vector<uint32_t>& latencies)
     :m_latencies(latencies)
 {
     sink = std::make_shared<TestSink>();
-    connect(this, &SyncMethodPropertyIntTestData::executeFunctionSignal, this, &SyncMethodPropertyIntTestData::testFunctionSlot);
 }
 
 bool MethodPropertyIntTestData::allResponsesReceived (uint32_t sentRequestsNumber) const
@@ -24,7 +24,7 @@ bool MethodPropertyIntTestData::allResponsesReceived (uint32_t sentRequestsNumbe
     return receivedMsgs == sentRequestsNumber;
 }
 
-void MethodPropertyIntTestData::testFunctionSlot(uint32_t value)
+void MethodPropertyIntTestData::testFunctionBase(uint32_t value)
 {
     auto start = std::chrono::high_resolution_clock::now();
     auto val = sink->funcInt(value);
@@ -41,17 +41,18 @@ SyncMethodPropertyIntTestData::SyncMethodPropertyIntTestData(std::vector<uint32_
 
 void SyncMethodPropertyIntTestData::testFunction(uint32_t value)
 {
-    emit executeFunctionSignal(value);
+    testFunctionBase(value);
     while (receivedMsgs < value ){}
 }
 
 AsyncMethodPropertyIntTestData::AsyncMethodPropertyIntTestData(std::vector<uint32_t>& latencies)
     :MethodPropertyIntTestData(latencies)
 {
+    m_futures = std::vector<QFuture<void>>(latencies.size(), QFuture<void>());
 }
 
 
 void AsyncMethodPropertyIntTestData::testFunction(uint32_t value)
 {
-    emit executeFunctionSignal(value);
+    m_futures[value] = QtConcurrent::run([value, this](){testFunctionBase(value);});
 }
