@@ -1,5 +1,5 @@
 servers:
-SHELL uvicorn python.test_api.olink_server:app --host 0.0.0.0 --port 8000
+SHELL uvicorn python.test_api.examples.olink.server:app --host 0.0.0.0 --port 8000
 clients:
 SHELL py PY_DIR/syncIntPropertyTest.py 1
 SHELL py PY_DIR/syncIntPropertyTest.py 10

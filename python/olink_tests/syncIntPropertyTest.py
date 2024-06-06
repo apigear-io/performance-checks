@@ -1,7 +1,11 @@
+import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../test_api')))
+
 from asyncio.events import get_event_loop
-from test_api.olink_client import Client
-from test_api.api_olink.sinks import TestApi0Sink
-from test_api.api_api.shared import EventHook
+import apigear.olink
+from api.olink.sinks import TestApi0Sink
+from utils.eventhook import EventHook
 from olink.client.node import ClientNode
 import asyncio
 import sys
@@ -69,7 +73,7 @@ class SyncIntPropertyTest:
         self.counter =  Counter(total_msgs_nuber)
         self.is_test_done = False
         self.node = ClientNode()
-        self.client = Client(self.node)
+        self.client = apigear.olink.Client(self.node)
         self.sink = TestApi0Sink()
         self.is_ready_event = asyncio.Event()
         self.is_server_done = asyncio.Event()
