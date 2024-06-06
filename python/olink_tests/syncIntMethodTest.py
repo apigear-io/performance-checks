@@ -1,7 +1,11 @@
+import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../test_api')))
+
 from asyncio.events import get_event_loop
-from test_api.olink_client import Client
-from test_api.api_olink.sinks import TestApi0Sink
-from test_api.api_api.shared import EventHook
+import apigear.olink
+from api.olink.sinks import TestApi0Sink
+from utils.eventhook import EventHook
 from olink.client.node import ClientNode
 import asyncio
 import sys
@@ -22,16 +26,16 @@ class Counter:
             self.on_threshold.fire()
 
 
-class AsyncIntPropertyTest:
+class SyncIntMethodTest:
 
-    def __init__(self, in_messsages_per_thread, threads):
-        self.messsages_per_thread = in_messsages_per_thread
+    def __init__(self, messsages_per_thread, threads):
+        self.messsages_per_thread = messsages_per_thread
         self.threadsNumber = threads
-        total_msgs_nuber = threads*self.messsages_per_thread
+        total_msgs_nuber = threads*messsages_per_thread
         self.counter =  Counter(total_msgs_nuber)
         self.is_test_done = False
         self.node = ClientNode()
-        self.client = Client(self.node)
+        self.client = apigear.olink.Client(self.node)
         self.sink = TestApi0Sink()
         self.is_ready_event = asyncio.Event()
         self.is_server_done = asyncio.Event()
@@ -39,7 +43,6 @@ class AsyncIntPropertyTest:
         self.stop_times = np.zeros(total_msgs_nuber)
     
     def on_counter_increased(self, value):
-        self.stop_times[value-1] = time.perf_counter_ns()
         self.counter.increase_count()
 
     def finish_test(self):
@@ -52,14 +55,11 @@ class AsyncIntPropertyTest:
         await self.is_ready_event.wait()
         thread_tasks = []
         start = time.perf_counter_ns()
-        for thread in range(self.threadsNumber):
-            thread_tasks.append( Thread(target=self.send_messages, args=(thread, self.messsages_per_thread)))
-        for thread in thread_tasks:
-            thread.start()
-        await self.is_server_done.wait()
+        for taskNo in range(self.threadsNumber):
+            thread_tasks.append (asyncio.create_task(self.send_messages(taskNo, self.messsages_per_thread)))
 
-        for thread in thread_tasks:
-            thread.join()
+        await asyncio.wait(thread_tasks, return_when=asyncio.ALL_COMPLETED)
+        await self.is_server_done.wait()
         end = time.perf_counter_ns()
 
         times = self.stop_times - self.start_times
@@ -74,10 +74,8 @@ class AsyncIntPropertyTest:
 
 
 
-    async def execute(self):
-        
+    async def execute(self):        
         self.node.link_remote(self.sink.olink_object_name())
-        self.sink.on_prop_int_changed += self.on_counter_increased
     
         self.sink._on_is_ready+= self.update_is_ready
         self.counter.on_threshold +=  self.finish_test
@@ -90,27 +88,36 @@ class AsyncIntPropertyTest:
         self.client.disconnect()
         await connectTask
 
-        self.sink.on_prop_int_changed -= self.on_counter_increased
+        
         self.counter.on_threshold -=  self.finish_test
         self.sink._on_is_ready-= self.update_is_ready
 
 
-    def send_messages(self, thread_no, messages_num):
+    async def send_messages(self, thread_no, messages_num):
         for msg_no in range(messages_num):
-            number = thread_no*messages_num + msg_no+ +1
-            self.start_times[number-1] = time.perf_counter_ns()
-            self.sink.set_prop_int(number)
+            number = thread_no*messages_num + msg_no
+            self.start_times[number] = time.perf_counter_ns()
+            execution = self.sink.func_int(number)
+            result = await execution
+            if result != number:
+                print ("wrong data send")
+                print(number)
+                print ("received")
+                print(result)
+            self.stop_times[result] = time.perf_counter_ns()
+            self.counter.increase_count()
+
 
 
 async def main():
-    messsages_per_thread = 1
+    messsages_per_thread = 10
     threads = 1
     args = sys.argv[1:]
     if len(args) > 0:
         messsages_per_thread = int(args[0])
     if len(args) > 1:
         threads = int(args[1])
-    test = AsyncIntPropertyTest(messsages_per_thread, threads)
+    test = SyncIntMethodTest(messsages_per_thread, threads)
     await test.execute()
 
 if __name__ == '__main__':
