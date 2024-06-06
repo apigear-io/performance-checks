@@ -1,7 +1,14 @@
 from asyncio.events import get_event_loop
-from test_api.olink_client import Client
-from test_api.api_olink.sinks import TestApi0Sink
-from test_api.api_api.shared import EventHook
+from os import startfile
+import threading
+import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../test_api')))
+
+from asyncio.events import get_event_loop
+import apigear.olink
+from api.olink.sinks import TestApi0Sink
+from utils.eventhook import EventHook
 from olink.client.node import ClientNode
 import asyncio
 import sys
@@ -22,21 +29,21 @@ class Counter:
             self.on_threshold.fire()
 
 
-class SyncIntMethodTest:
+class AsyncMethodTest:
 
     def __init__(self, messsages_per_thread, threads):
         self.messsages_per_thread = messsages_per_thread
         self.threadsNumber = threads
         total_msgs_nuber = threads*messsages_per_thread
         self.counter =  Counter(total_msgs_nuber)
-        self.is_test_done = False
         self.node = ClientNode()
-        self.client = Client(self.node)
+        self.client = apigear.olink.Client(self.node)
         self.sink = TestApi0Sink()
         self.is_ready_event = asyncio.Event()
         self.is_server_done = asyncio.Event()
         self.start_times = np.zeros(total_msgs_nuber)
         self.stop_times = np.zeros(total_msgs_nuber)
+        self.messages_tasks = []
     
     def on_counter_increased(self, value):
         self.counter.increase_count()
@@ -55,22 +62,23 @@ class SyncIntMethodTest:
             thread_tasks.append (asyncio.create_task(self.send_messages(taskNo, self.messsages_per_thread)))
 
         await asyncio.wait(thread_tasks, return_when=asyncio.ALL_COMPLETED)
+        await asyncio.wait(self.messages_tasks, return_when=asyncio.ALL_COMPLETED)
         await self.is_server_done.wait()
         end = time.perf_counter_ns()
 
         times = self.stop_times - self.start_times
-        avg = (times.sum()/1000)/len(times)
-        l_max = times.max()/1000
-        l_min = times.min()/1000
+        avg = (float((times.sum())/len(times)))/1000.0
+        l_max = float(times.max())/1000.0
+        l_min = float(times.min())/1000.0
 
         print("Time measured [ms]: " + "{:.2f}".format(int((end - start)/1000000)))
         print("Objects number: 1")
         print("Function execution number for each object: "+ str(self.threadsNumber*self.messsages_per_thread))
-        print("Latency[us]: mean ", "{:.2f}".format(avg), " max ", "{:.2f}".format(l_max), " min ", "{:.2f}".format(l_min))
+        print("Latency[us]: mean", "{:.2f}".format(avg), " max", "{:.2f}".format(l_max), " min", "{:.2f}".format(l_min))
 
 
 
-    async def execute(self):        
+    async def execute(self):
         self.node.link_remote(self.sink.olink_object_name())
     
         self.sink._on_is_ready+= self.update_is_ready
@@ -83,7 +91,6 @@ class SyncIntMethodTest:
         self.node.unlink_remote(self.sink.olink_object_name())
         self.client.disconnect()
         await connectTask
-
         
         self.counter.on_threshold -=  self.finish_test
         self.sink._on_is_ready-= self.update_is_ready
@@ -93,17 +100,13 @@ class SyncIntMethodTest:
         for msg_no in range(messages_num):
             number = thread_no*messages_num + msg_no
             self.start_times[number] = time.perf_counter_ns()
-            execution = self.sink.func_int(number)
-            result = await execution
-            if result != number:
-                print ("wrong data send")
-                print(number)
-                print ("received")
-                print(result)
-            self.stop_times[result] = time.perf_counter_ns()
-            self.counter.increase_count()
+            self.messages_tasks.append(asyncio.create_task(self.sink.func_int(number)))
+            self.messages_tasks[number].add_done_callback(self.method_finished)
 
-
+    def method_finished(self, future):
+        result = future.result()
+        self.stop_times[result] = time.perf_counter_ns()
+        self.counter.increase_count()
 
 async def main():
     messsages_per_thread = 10
@@ -113,7 +116,7 @@ async def main():
         messsages_per_thread = int(args[0])
     if len(args) > 1:
         threads = int(args[1])
-    test = SyncIntMethodTest(messsages_per_thread, threads)
+    test = AsyncMethodTest(messsages_per_thread, threads)
     await test.execute()
 
 if __name__ == '__main__':
