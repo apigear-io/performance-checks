@@ -75,11 +75,10 @@ class AsyncIntPropertyTest:
         self.counter.on_threshold +=  self.finish_test
         
         await self.client.connect("localhost", 1883)
-        self.client.set_remote_property("StartTestTopic", {"someName"});
-        self.client.client.publish("StartTestTopic", "", 2)
+        self.client.set_remote_property("StartTestTopic", "someName");
         await self.send_and_receive()
 
-        self.client.set_remote_property("StopTestTopic", {"someName"});
+        self.client.set_remote_property("StopTestTopic", "someName");
         time.sleep(1)
         self.client.disconnect()
 
