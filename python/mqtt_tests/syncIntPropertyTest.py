@@ -130,7 +130,6 @@ class SyncIntPropertyTest:
         time.sleep(1)
         self.client.disconnect()
 
-
         self.sink.on_prop_int_changed -= self.on_counter_increased
         self.counter.on_threshold -=  self.finish_test
 
