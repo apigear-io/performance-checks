@@ -3,6 +3,7 @@ from os import startfile
 import threading
 import os
 import sys
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../test_api')))
 
 from asyncio.events import get_event_loop
@@ -100,12 +101,12 @@ class AsyncMethodTest:
         for msg_no in range(messages_num):
             number = thread_no*messages_num + msg_no
             self.start_times[number] = time.perf_counter_ns()
-            self.messages_tasks.append(asyncio.create_task(self.sink.func_int(number)))
+            self.messages_tasks.append(asyncio.create_task(self.sink.func_void(number)))
             self.messages_tasks[number].add_done_callback(self.method_finished)
 
     def method_finished(self, future):
-        result = future.result()
-        self.stop_times[result] = time.perf_counter_ns()
+        value = future.result()
+        self.stop_times[value] = time.perf_counter_ns()
         self.counter.increase_count()
 
 async def main():
