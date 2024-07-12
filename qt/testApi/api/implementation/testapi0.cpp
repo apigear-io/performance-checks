@@ -86,4 +86,9 @@ QString TestApi0::funcString(const QString& paramString)
 {
     return QString();
 }
+
+void TestApi0::funcVoid(int paramInt)
+{
+    return;
+}
 } //namespace api
