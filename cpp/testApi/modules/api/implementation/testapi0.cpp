@@ -102,6 +102,22 @@ std::future<std::string> TestApi0::funcStringAsync(const std::string& paramStrin
     );
 }
 
+void TestApi0::funcVoid(int someParam)
+{
+    (void) someParam; // suppress the 'Unreferenced Formal Parameter' warning.
+    // do business logic here
+}
+
+std::future<void> TestApi0::funcVoidAsync(int someParam)
+{
+    return std::async(std::launch::async, [this,
+                    someParam]()
+        {
+            return funcVoid(someParam);
+        }
+    );
+}
+
 ITestApi0Publisher& TestApi0::_getPublisher() const
 {
     return *m_publisher;
