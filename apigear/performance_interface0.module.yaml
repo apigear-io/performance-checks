@@ -24,6 +24,9 @@ interfaces:
           - { name: paramString, type: string }
         return:
           type: string
+      - name: funcVoid
+        params:
+          - { name: paramInt, type: int }
     signals:
       - name: sigInt
         params:
