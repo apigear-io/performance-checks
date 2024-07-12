@@ -32,7 +32,6 @@ FetchContent_MakeAvailable(qtpromise)
 
 
 add_subdirectory(testApi)
-include_directories(testApi/thirdparty)
 add_subdirectory(olink_tests/single_object_many_threads)
 add_subdirectory(mqtt_tests/single_object_many_threads)
 if(MANY_OBJECT_TESTS)
