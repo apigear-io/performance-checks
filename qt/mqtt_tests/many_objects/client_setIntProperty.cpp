@@ -7,9 +7,16 @@
 struct PropertyIntTestData
 {
 public:
-    std::shared_ptr<ITestSink> sink;
-    std::function<void(int)> testFunction;
 
+    PropertyIntTestData(std::shared_ptr<ITestSink> in_sink, std::function<void(int)> func):
+        sink(in_sink),
+        funcToExecute(func)
+    {}
+
+    void testFunction(int param)
+    {
+        funcToExecute(param);
+    }
 
     bool isReady() const
     {
@@ -25,6 +32,9 @@ public:
     {
         return sink->allResponsesReceived(messages_number);
     }
+private:
+    std::shared_ptr<ITestSink> sink;
+    std::function<void(int)> funcToExecute;
 };
 
 class IntPropertySetter {

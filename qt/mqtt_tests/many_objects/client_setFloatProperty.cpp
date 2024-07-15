@@ -7,7 +7,16 @@
 struct PropertyFloatTestData
 {
 public:
-    std::function<void(float)> testFunction;
+
+    PropertyFloatTestData(std::shared_ptr<ITestSink> in_sink, std::function<void(float)> func):
+        sink(in_sink),
+        funcToExecute(func)
+    {}
+
+    void testFunction(float param)
+    {
+        funcToExecute(param);
+    }
 
     bool isReady() const
     {
@@ -25,6 +34,7 @@ public:
     }
 private:
     std::shared_ptr<ITestSink> sink;
+    std::function<void(float)> funcToExecute;
 };
 
 class FloatPropertySetter {

@@ -41,7 +41,7 @@ public:
         return sink->allResponsesReceived(messages_number);
     }
 
-public:
+private:
     std::function<void(uint32_t)> m_testFunction;
     std::shared_ptr<ITestSink> sink;
 };
