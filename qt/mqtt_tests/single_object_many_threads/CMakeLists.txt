@@ -18,9 +18,11 @@ set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 
 add_executable(mqtt_single_client_setIntProperty "client_setIntProperty.cpp" )
+add_executable(mqtt_single_client_asyncIntMethod "client_asyncIntMethod.cpp" "../helpers/methodinttestdata.cpp")
 add_executable(mqtt_single_client_setStringProperty "client_setStringProperty.cpp" )
 add_executable(mqtt_single_server "server.cpp" )
 
 target_link_libraries(mqtt_single_server  api::api_mqtt api::api_impl)
 target_link_libraries(mqtt_single_client_setIntProperty api::api_mqtt Qt6::Core)
+target_link_libraries(mqtt_single_client_asyncIntMethod api::api_mqtt Qt6::Core)
 target_link_libraries(mqtt_single_client_setStringProperty api::api_mqtt)
