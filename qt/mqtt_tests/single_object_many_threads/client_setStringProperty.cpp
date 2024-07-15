@@ -4,30 +4,6 @@
 #include "../helpers/mqtt_network_protocol_handler_for_test.hpp"
 #include <memory>
 
-
-class PropertyIntTestData
-{
-public:
-    PropertyIntTestData(ApiGear::Mqtt::Client& client)
-    {
-        auto obj =  std::make_shared<TestSink<api::MqttTestApi0,api::AbstractTestApi0>>(client);
-        m_testFunction = [obj](uint32_t value)
-        {
-            // Add one, to avoid setting property to 0 as first call, 0 is default property and it won't be set for same value.
-            obj->setPropInt(value + 1);
-        };
-        sink = obj;
-    }
-
-    void testFunction(uint32_t value)
-    {
-        m_testFunction(value);
-    }
-
-public:
-    std::function<void(uint32_t)> m_testFunction;
-    std::shared_ptr<ITestSink> sink;
-};
 struct PropertyStringTestData
 {
 public:
