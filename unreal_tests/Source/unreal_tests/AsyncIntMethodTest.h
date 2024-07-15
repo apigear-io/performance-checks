@@ -24,7 +24,7 @@ public:
         int messages_number = requestsPerCall * callsNumber;
         m_startTimePoints = std::vector<chrono_hr_timepoint>(messages_number, chrono_hr_timepoint());
         m_stopTimePoints = std::vector<chrono_hr_timepoint>(messages_number, chrono_hr_timepoint());
-        m_futures.reserve(messages_number);
+        m_futures = std::vector<TSharedFuture<void>>(messages_number, TSharedFuture<void>());
     }
 
     void cleanUp() override
@@ -40,7 +40,7 @@ public:
         for (auto i = 0; i < m_request_per_trhead; i++)
         {
             auto number = startNumber + i;
-            m_futures.push_back(Async(EAsyncExecution::ThreadPool,
+            m_futures[number]=(Async(EAsyncExecution::Thread,
                 [number, this]()
                 {
                     m_startTimePoints[number] = std::chrono::high_resolution_clock::now();
