@@ -24,6 +24,20 @@ public:
         sink = obj;
 
     }
+    bool isReady() const
+    {
+        return sink->isReady();
+    }
+
+    const QString objectName() const
+    {
+        return sink->objectName();
+    }
+
+    bool allResponsesReceived(uint32_t messages_number) const
+    {
+        return sink->allResponsesReceived(messages_number);
+    }
 
     void testFunction(uint32_t value)
     {

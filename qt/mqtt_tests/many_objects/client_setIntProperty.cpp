@@ -9,6 +9,22 @@ struct PropertyIntTestData
 public:
     std::shared_ptr<ITestSink> sink;
     std::function<void(int)> testFunction;
+
+
+    bool isReady() const
+    {
+        return sink->isReady();
+    }
+
+    const QString objectName() const
+    {
+        return sink->objectName();
+    }
+
+    bool allResponsesReceived(uint32_t messages_number) const
+    {
+        return sink->allResponsesReceived(messages_number);
+    }
 };
 
 class IntPropertySetter {
