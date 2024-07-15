@@ -31,7 +31,7 @@ public:
         }
         for (auto& element : testData)
         {
-            QString name = element.sink->objectName();
+            QString name = element.objectName();
             m_client->setRemoteProperty(TestMessages::clientStartsTestTopic, {name.toStdString()});
         }
     }
@@ -44,7 +44,7 @@ public:
         {
             // wait until ready to use.
         }
-        QString name = testData.sink->objectName();
+        QString name = testData.objectName();
         m_client->setRemoteProperty(TestMessages::clientStartsTestTopic,{name.toStdString()});
     }
 
@@ -53,7 +53,7 @@ public:
     {
         for (auto& element : testData)
         {
-            QString name = element.sink->objectName();
+            QString name = element.objectName();
             m_client->setRemoteProperty(TestMessages::clientStopsTestTopic, {name.toStdString()});
         }
     }
@@ -61,7 +61,7 @@ public:
     void disconnectObjects(TestData& testData)
     {
         qDebug()<<"sending STOP ";
-        QString name = testData.sink->objectName();
+        QString name = testData.objectName();
         m_client->setRemoteProperty(TestMessages::clientStopsTestTopic, {name.toStdString()});
     }
 
@@ -74,7 +74,7 @@ public:
             auto serviceWithAllMessages = 0u;
             for (const auto& element : testData)
             {
-                if (element.sink->receivedMessages() == messages_number)
+                if (element.allResponsesReceived(messages_number))
                 {
                     serviceWithAllMessages++;
                 }
@@ -89,14 +89,14 @@ public:
         auto allMessagesReceived = false;
         while (!allMessagesReceived)
         {
-            allMessagesReceived = testData.sink->receivedMessages() == messages_number;
+            allMessagesReceived = testData.allResponsesReceived(messages_number);
         }
     }
 
     template<class TestData>
     void waitUntilObjectConnected(const TestData& object)
     {
-        while (!object.sink->isReady())
+        while (!object.isReady())
         {
             // wait until ready to use.
         }

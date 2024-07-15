@@ -7,8 +7,24 @@
 struct PropertyFloatTestData
 {
 public:
-    std::shared_ptr<ITestSink> sink;
     std::function<void(float)> testFunction;
+
+    bool isReady() const
+    {
+        return sink->isReady();
+    }
+
+    const QString objectName() const
+    {
+        return sink->objectName();
+    }
+
+    bool allResponsesReceived(uint32_t messages_number) const
+    {
+        return sink->allResponsesReceived(messages_number);
+    }
+private:
+    std::shared_ptr<ITestSink> sink;
 };
 
 class FloatPropertySetter {

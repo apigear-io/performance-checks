@@ -7,8 +7,8 @@ class ITestSink
 {
 public:
     virtual bool isReady() const = 0;
-    virtual const QString& objectName() const= 0;
-    virtual uint32_t receivedMessages() const = 0;
+    virtual const QString objectName() const= 0;
+    virtual bool allResponsesReceived(uint32_t messages_number) const = 0;
 };
 
 
@@ -33,7 +33,7 @@ public:
         return m_isReady;
     }
 
-    const QString& objectName() const override
+    const QString objectName() const override
     {
         static auto name = BaseAbstractTestApi::objectName();
         return name;
@@ -63,11 +63,11 @@ public:
     {
         msgReceived++;
     }
-    uint32_t receivedMessages() const override
+    bool allResponsesReceived(uint32_t messages_number) const override
     {
-        return msgReceived;
+        return msgReceived == messages_number;
     }
 private:
-    uint32_t msgReceived = 0;
+    std::atomic<uint32_t> msgReceived { 0 };
     bool m_isReady = false;
 };

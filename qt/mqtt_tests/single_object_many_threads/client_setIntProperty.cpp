@@ -26,6 +26,21 @@ public:
         m_testFunction(value);
     }
 
+    bool isReady() const
+    {
+        return sink->isReady();
+    }
+
+    const QString objectName() const
+    {
+        return sink->objectName();
+    }
+
+    bool allResponsesReceived(uint32_t messages_number) const
+    {
+        return sink->allResponsesReceived(messages_number);
+    }
+
 public:
     std::function<void(uint32_t)> m_testFunction;
     std::shared_ptr<ITestSink> sink;
