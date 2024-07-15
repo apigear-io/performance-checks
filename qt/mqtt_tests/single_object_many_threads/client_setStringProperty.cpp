@@ -22,8 +22,8 @@ public:
             obj->setPropString(messagesToSend[value]);
         };
         sink = obj;
-
     }
+
     bool isReady() const
     {
         return sink->isReady();
@@ -43,8 +43,8 @@ public:
     {
         m_testFunction(value);
     }
-    std::shared_ptr<ITestSink> sink;
 private:
+    std::shared_ptr<ITestSink> sink;
     std::function<void(uint32_t)> m_testFunction;
     // Prepare different messages to send before test starts not to slow down it with allocation of this many messages:
     std::vector<QString> messagesToSend;
