@@ -19,7 +19,7 @@ jobs:
           - { name: "CMake Ubuntu Latest GCC", os: ubuntu-latest }
           - { name: "CMake macOS Latest Clang", os: macos-latest }
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Setup cmake
@@ -52,15 +52,10 @@ jobs:
         with:
           repository: apigear-io/template-unreal
           path: template-unreal
-      - name: Install Go
-        uses: actions/cache@v3
+      - name: Set up Go 1.23
+        uses: actions/setup-go@v5
         with:
-          path: |
-            ~/go/pkg/mod
-            ~/.cache/go-build
-          key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('**/go.sum') }}
-          restore-keys: ${{ runner.os }}-go-${{ matrix.go-version }}-
-
+          go-version: 1.23
       - name: Generate APIs
         run: go run main.go install
       - run: go run main.go generateAPI
