@@ -18,7 +18,7 @@ jobs:
           - { name: "CMake Ubuntu Latest GCC", os: ubuntu-latest }
           - { name: "CMake macOS Latest Clang", os: macos-latest }
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Setup cmake
@@ -28,26 +28,21 @@ jobs:
     # CHECKOUT templates and generate APIs
       - name: create dir and checkout qt template
         run: mkdir template-qtcpp
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           repository: apigear-io/template-qtcpp
           path: template-qtcpp
 
       - name: create dir cpp template
         run: mkdir template-cpp14
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           repository: apigear-io/template-cpp14
           path: template-cpp14
-      - name: Install Go
-        uses: actions/cache@v3
+      - name: Set up Go 1.23
+        uses: actions/setup-go@v5
         with:
-          path: |
-            ~/go/pkg/mod
-            ~/.cache/go-build
-          key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('**/go.sum') }}
-          restore-keys: ${{ runner.os }}-go-${{ matrix.go-version }}-
-
+          go-version: 1.23
       - name: Generate APIs
         run: go run main.go install
       - run: go run main.go GenerateMulitObjectAPI
@@ -62,7 +57,7 @@ jobs:
         run: |
             mkdir qtmqtt
       - name: Checkout QMqtt
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: qt/qtmqtt
           ref: '6.5.2'
@@ -142,7 +137,7 @@ jobs:
       - name: cpp api and tests build for Linux/Mac
         if: ${{ matrix.config.os != 'windows-latest'}}
         working-directory: cpp
-        run: cmake -Bbuild -DCMAKE_INSTALL_PREFIX=tmp -DCMAKE_MODULE_PATH=$GITHUB_WORKSPACE/deps -DCMAKE_BUILD_TYPE=Release -DMANY_OBJECT_TESTS=ON -DAPIGEAR_FETCH_OLINKCORE=ON -DCPP_FETCH_DEPS=ON && cmake --build build/ --config Release  && cmake --build build/ --target install --config Release
+        run: cmake -Bbuild -DCMAKE_INSTALL_PREFIX=tmp -DCMAKE_PREFIX_PATH:PATH=$GITHUB_WORKSPACE/deps -DCMAKE_MODULE_PATH=$GITHUB_WORKSPACE/deps -DCMAKE_BUILD_TYPE=Release -DAPIGEAR_FETCH_OLINKCORE=ON -DCPP_FETCH_DEPS=ON && cmake --build build/ --config Release  && cmake --build build/ --target install --config Release
       - name: Update path env on Windows for testing
         if: ${{ matrix.config.os == 'windows-latest'}}
         run: echo "$GITHUB_WORKSPACE/cpp/build/bin/Release/" >> $GITHUB_PATH
@@ -151,9 +146,9 @@ jobs:
         working-directory: cpp
         run: |
           $Env:GITHUB_WORKSPACE_UNIX = "${{ github.workspace }}" -replace "\\","/"
-          cmake -Bbuild -DCMAKE_INSTALL_PREFIX=tmp -DCMAKE_MODULE_PATH="$Env:GITHUB_WORKSPACE_UNIX/deps" -DCMAKE_BUILD_TYPE=Release -DMANY_OBJECT_TESTS=ON -DAPIGEAR_FETCH_OLINKCORE=ON -DCPP_FETCH_DEPS=ON && cmake --build build/ --config Release && cmake --build build/ --target install --config Release     
+          cmake -Bbuild -DCMAKE_INSTALL_PREFIX=tmp -DCMAKE_PREFIX_PATH:PATH="$Env:GITHUB_WORKSPACE_UNIX/deps" -DCMAKE_MODULE_PATH="$Env:GITHUB_WORKSPACE_UNIX/deps" -DCMAKE_BUILD_TYPE=Release -DAPIGEAR_FETCH_OLINKCORE=ON -DCPP_FETCH_DEPS=ON && cmake --build build/ --config Release && cmake --build build/ --target install --config Release
       - name: Archive cpp release artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: cpp-install-artifacts-${{ matrix.config.os }}
           path: |
