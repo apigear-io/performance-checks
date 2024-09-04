@@ -58,26 +58,16 @@ func Install() error {
 
 	// asset name we are looking for
 	asset := fmt.Sprintf("apigear_%s_%s.zip", runtime.GOOS, runtime.GOARCH)
-	log.Printf("looking for asset %s in release assets", asset)
-	foundAsset := false
-	for _, a := range release.Assets {
-		if a.GetName() == asset {
-			log.Printf("found asset %s", asset)
-			foundAsset = true
-			err = helper.HttpDownload(a.GetBrowserDownloadURL(), "tmp/"+asset)
-			if err != nil {
-				return err
-			}
-			err = helper.ExtractZipFile("tmp/"+asset, "bin")
-			if err != nil {
-				return err
-			}
-			break
-		}
+	asset_url := fmt.Sprintf("https://github.com/apigear-io/cli/releases/latest/download/%s", asset)
+	err = helper.HttpDownload(asset_url, "tmp/"+asset)
+	if err != nil {
+		return err
 	}
-	if !foundAsset {
-		return fmt.Errorf("could not find matching asset %s in release assets", asset)
+	err = helper.ExtractZipFile("tmp/"+asset, "bin")
+	if err != nil {
+		return err
 	}
+
 	src := helper.Join("tmp", apigear())
 	dst := helper.Join("bin", apigear())
 	helper.Rename(src, dst)
