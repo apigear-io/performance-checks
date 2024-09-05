@@ -25,10 +25,10 @@ int main(int argc, char* argv[])
 
     auto portNumber = 8000;
     ApiGear::PocoImpl::OLinkHost testHost(registry, [](auto /*level*/, auto /*msg*/) {});
-    testHost.listen(portNumber);
     auto begin = std::chrono::high_resolution_clock::now();
 
     auto services = prepareServices(registry);
+    testHost.listen(portNumber);
     auto testStarted = false;
 
     auto servicesfinished = 0;
