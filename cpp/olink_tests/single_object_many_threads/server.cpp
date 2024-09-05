@@ -62,11 +62,11 @@ int main(int argc, char* argv[])
 
     auto portNumber = 8000;
     ApiGear::PocoImpl::OLinkHost testHost(registry, [](auto /*level*/, auto /*msg*/){ });
-    testHost.listen(portNumber);
 
     auto source = std::make_shared<Cpp::Api::TestApi0>();
     auto sourceService = std::make_shared<TestService>(source, registry);
     registry.addSource(sourceService);
+    testHost.listen(portNumber);
         
     bool testStarted = false;
     // Will be overwritten with receiving link message
