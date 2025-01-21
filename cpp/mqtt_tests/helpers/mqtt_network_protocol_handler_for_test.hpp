@@ -70,7 +70,7 @@ public:
             auto serviceWithAllMessages = 0u;
             for (const auto& element : testData)
             {
-                if (element.sink->receivedMessages() == messages_number)
+                if (element.receivedMessages() == messages_number)
                 {
                     serviceWithAllMessages++;
                 }
@@ -85,14 +85,14 @@ public:
         auto allMessagesReceived = false;
         while (!allMessagesReceived)
         {
-            allMessagesReceived = testData.sink->receivedMessages() == messages_number;
+            allMessagesReceived = testData.receivedMessages() == messages_number;
         }
     }
 
     template<class TestData>
     void waitUntilObjectConnected(const TestData& object)
     {
-        while (!object.sink->isReady())
+        while (!object.isReady())
         {
             // wait until ready to use.
         }

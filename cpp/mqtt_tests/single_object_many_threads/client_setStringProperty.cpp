@@ -1,63 +1,54 @@
 #include "api/generated/mqtt/testapi0client.h"
-#include "../helpers/itestsink.h"
 #include "../../scenario_templates/single_object_many_threads/executeTestFunction.h"
 #include "../helpers/mqtt_network_protocol_handler_for_test.hpp"
 #include <memory>
 
 
-class PropertyIntTestData
-{
-public:
-    PropertyIntTestData(std::shared_ptr<ApiGear::MQTT::Client> client)
-    {
-        auto obj = std::make_shared<TestSink<Cpp::Api::MQTT::TestApi0Client>>(client);
-        m_testFunction = [obj](uint32_t value)
-        {
-            // Add one, to avoid setting property to 0 as first call, 0 is default property and it won't be set for same value.
-            obj->setPropInt(value + 1);
-        };
-        sink = obj;
-    }
-
-    void testFunction(uint32_t value)
-    {
-        m_testFunction(value);
-    }
-
-public:
-    std::function<void(uint32_t)> m_testFunction;
-    std::shared_ptr<ITestSink> sink;
-};
 struct PropertyStringTestData
 {
 public:
 
     PropertyStringTestData(std::shared_ptr<ApiGear::MQTT::Client> client, uint32_t messages_number, uint32_t sendThreadNumber)
     {
+        sink = std::make_shared<Cpp::Api::MQTT::TestApi0Client>(client);
+        sink->_getPublisher().subscribeToPropStringChanged([this](auto value)
+            {
+                (void)value;
+                count++;
+            });
         for (int msgNo = 0u; msgNo < sendThreadNumber*(messages_number +1); msgNo++)
         {
             auto message = "Some longer property to be set, prepared before test for each message number to reduce allocating time in tests"+ std::to_string(msgNo);
             messagesToSend.push_back(message);
         }
-
-        auto obj =  std::make_shared<TestSink<Cpp::Api::MQTT::TestApi0Client>>(client);
-        m_testFunction = [obj, this](uint32_t value)
-        {
-            obj->setPropString(messagesToSend[value]);
-        };
-        sink = obj;
-
     }
 
     void testFunction(uint32_t value)
     {
-        m_testFunction(value);
+        sink->setPropString(messagesToSend[value]);
     }
-    std::shared_ptr<ITestSink> sink;
+
+    bool allResponsesReceived(uint32_t sentRequestsNumber) const
+    {
+        return count == sentRequestsNumber;
+    }
+
+    bool isReady() const
+    {
+        return sink->_is_ready();
+    }
+
+    uint32_t receivedMessages() const
+    {
+        return count;
+    }
+
 private:
-    std::function<void(uint32_t)> m_testFunction;
+    std::atomic<uint32_t> count{ 0 };
+    std::shared_ptr<Cpp::Api::MQTT::TestApi0Client> sink;
     // Prepare different messages to send before test starts not to slow down it with allocation of this many messages:
     std::vector<std::string> messagesToSend;
+
 };
 
 

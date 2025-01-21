@@ -15,10 +15,17 @@ find_package(api COMPONENTS  api-implementation api-mqtt)
 set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 
-add_executable(mqtt_single_client_setIntProperty "client_setIntProperty.cpp" )
+add_executable(mqtt_single_client_setIntProperty "client_setIntProperty.cpp" "../../latency_helpers/latency_helpers.cpp")
 add_executable(mqtt_single_client_setStringProperty "client_setStringProperty.cpp" )
 add_executable(mqtt_single_server "server.cpp" )
+add_executable(mqtt_single_client_syncSetIntProperty "client_syncSetIntProperty.cpp" "../../latency_helpers/latency_helpers.cpp")
+add_executable(mqtt_single_client_syncMethodInt "client_syncIntMethodCall.cpp" "../../latency_helpers/latency_helpers.cpp")
+add_executable(mqtt_single_client_asyncMethodInt "client_asyncIntMethodCall.cpp" "../../latency_helpers/latency_helpers.cpp")
 
 target_link_libraries(mqtt_single_server  api::api-mqtt api::api-implementation)
 target_link_libraries(mqtt_single_client_setIntProperty api::api-mqtt)
 target_link_libraries(mqtt_single_client_setStringProperty api::api-mqtt)
+target_link_libraries(mqtt_single_client_syncSetIntProperty api::api-mqtt)
+target_link_libraries(mqtt_single_client_syncMethodInt api::api-mqtt)
+target_link_libraries(mqtt_single_client_asyncMethodInt api::api-mqtt)
+
