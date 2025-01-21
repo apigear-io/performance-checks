@@ -9,8 +9,8 @@ find_package(api COMPONENTS api-olink  api-implementation)
 
 set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin )
 
-add_executable(olink_core_no_network_single_object_setIntProperty "olink_core_no_network_single_object_setIntProperty.cpp" "../helpers/latency_helpers.cpp")
-add_executable(olink_core_no_network_single_object_syncIntMethodCall "olink_core_no_network_single_object_syncIntMethodCall.cpp" "../helpers/latency_helpers.cpp")
+add_executable(olink_core_no_network_single_object_setIntProperty "olink_core_no_network_single_object_setIntProperty.cpp" "../../latency_helpers/latency_helpers.cpp" )
+add_executable(olink_core_no_network_single_object_syncIntMethodCall "olink_core_no_network_single_object_syncIntMethodCall.cpp" "../../latency_helpers/latency_helpers.cpp")
 
 
 target_link_libraries(olink_core_no_network_single_object_setIntProperty api::api-olink  api::api-implementation)

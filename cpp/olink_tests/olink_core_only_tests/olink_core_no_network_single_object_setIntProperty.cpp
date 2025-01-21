@@ -9,7 +9,7 @@
 #include "api/implementation//testapi0.h"
 
 #include "../helpers/inspected_sink.h"
-#include "../helpers/latency_helpers.h"
+#include "../../latency_helpers/latency_helpers.h"
 #include "../helpers/olink_handler_no_network.hpp"
 #include "../../scenario_templates/single_object_many_threads/executeTestFunction.h"
 

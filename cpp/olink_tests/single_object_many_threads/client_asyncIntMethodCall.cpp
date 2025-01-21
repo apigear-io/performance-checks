@@ -2,7 +2,7 @@
 #include "api/generated/olink/testapi0client.h"
 
 #include "../helpers/olink_network_protocol_handler_for_test.hpp"
-#include "../helpers/latency_helpers.h"
+#include "../../latency_helpers/latency_helpers.h"
 #include "../../scenario_templates/single_object_many_threads/executeTestFunction.h"
 
 #include <memory>
@@ -21,35 +21,33 @@ public:
         :m_latenciesStart(latenciesStart),
         m_latenciesStop(latenciesStop)
     {
-        m_futures = std::vector<std::shared_future<void>>(latenciesStart.size(), std::shared_future<void> ());
+        m_futures = std::vector<std::shared_future<int>>(latenciesStart.size(), std::shared_future<int>());
         olinkClient = std::make_shared<Cpp::Api::olink::TestApi0Client>();
-        sink = std::make_shared<InspectedSink>(olinkClient);
+        sink = std::make_shared<Cpp::Api::olink::TestApi0Client>();
     }
     void testFunction(uint32_t value)
     {
         m_latenciesStart[value] = std::chrono::high_resolution_clock::now();
-
-        auto task = std::async(std::launch::async, [this, value]()
-            {
-                 auto res = olinkClient->funcInt(value);
-                 m_latenciesStop[res] = std::chrono::high_resolution_clock::now();
-                 isAllReceived++;
+        auto task = sink->funcIntAsync(value,
+            [this](int32_t value) {
+                m_latenciesStop[value] = std::chrono::high_resolution_clock::now();
+                msgsReceived++;
             });
 
-        m_futures[value]=task.share();
+        m_futures[value] = task.share();
     }
 
     bool allResponsesReceived (uint32_t sentRequestsNumber) const
     {
-        return isAllReceived >= sentRequestsNumber;
+        return msgsReceived >= sentRequestsNumber;
     }
 
     std::vector<chrono_hr_timepoint>& m_latenciesStart;
     std::vector<chrono_hr_timepoint>& m_latenciesStop;
-    std::vector<std::shared_future<void>> m_futures;
-    std::atomic<int> isAllReceived{ 0 };
+    std::vector<std::shared_future<int>> m_futures;
     std::shared_ptr< Cpp::Api::olink::TestApi0Client> olinkClient;
-    std::shared_ptr<InspectedSink> sink;
+    std::atomic<int> msgsReceived{ 0 };
+    std::shared_ptr<Cpp::Api::olink::TestApi0Client> sink;
 };
 
 /*
