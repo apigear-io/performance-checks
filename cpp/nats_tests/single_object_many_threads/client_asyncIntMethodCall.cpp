@@ -1,7 +1,7 @@
 #include "api/generated/nats/testapi0client.h"
 
 #include "../helpers/nats_network_protocol_handler_for_test.hpp"
-#include "../helpers/latency_helpers.h"
+#include "../../latency_helpers/latency_helpers.h"
 #include "../../scenario_templates/single_object_many_threads/executeTestFunction.h"
 
 #include <memory>
@@ -21,27 +21,26 @@ public:
         :m_latenciesStart(latenciesStart),
         m_latenciesStop(latenciesStop)
     {
-        m_futures = std::vector<std::shared_future<void>>(latenciesStart.size(), std::shared_future<void> ());
+        m_futures = std::vector<std::shared_future<int>>(latenciesStart.size(), std::shared_future<int> ());
         sink = Cpp::Api::Nats::TestApi0Client::create(client);
     }
 
     void testFunction(uint32_t value)
     {
-        m_latenciesStart[value] = std::chrono::high_resolution_clock::now();
 
-        auto task = std::async(std::launch::async, [this, value]()
-            {
-                 auto res = sink->funcInt(value);
-                 m_latenciesStop[res] = std::chrono::high_resolution_clock::now();
-                 msgsReceived++;
-            });
+        m_latenciesStart[value] = std::chrono::high_resolution_clock::now();
+        auto task = sink->funcIntAsync(value,
+                     [this](int32_t value) {
+                         m_latenciesStop[value] = std::chrono::high_resolution_clock::now();
+                         msgsReceived++;
+                     });
 
         m_futures[value]=task.share();
     }
 
     bool allResponsesReceived (uint32_t sentRequestsNumber) const
     {
-        return msgsReceived >= sentRequestsNumber;
+        return msgsReceived == sentRequestsNumber;
     }
 
     bool isReady() const
@@ -55,7 +54,7 @@ public:
     }
     std::vector<chrono_hr_timepoint>& m_latenciesStart;
     std::vector<chrono_hr_timepoint>& m_latenciesStop;
-    std::vector<std::shared_future<void>> m_futures;
+    std::vector<std::shared_future<int>> m_futures;
     std::atomic<int> msgsReceived{ 0 };
     std::shared_ptr<Cpp::Api::Nats::TestApi0Client> sink;
 };
@@ -90,7 +89,6 @@ int main(int argc, char* argv[])
     PropertyIntTestData testObject(networkProtocolHandler.getClient(), m_latenciesStart, m_latenciesStop);
 
     executeTestFunction(testObject, networkProtocolHandler, messages_number, sendThreadNumber);
-    
     calculateAndPrintLatencyParameters(m_latenciesStart, m_latenciesStop);
 
     return 0;
