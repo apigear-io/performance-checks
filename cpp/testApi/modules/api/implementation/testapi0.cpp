@@ -55,15 +55,18 @@ const std::string& TestApi0::getPropString() const
 
 int TestApi0::funcInt(int paramInt)
 {
-    return paramInt;
+    return paramInt; 
 }
 
-std::future<int> TestApi0::funcIntAsync(int paramInt)
+std::future<int> TestApi0::funcIntAsync(int paramInt, std::function<void(int)> callback)
 {
-    return std::async(std::launch::async, [this,
+    return std::async(std::launch::async, [this, callback,
                     paramInt]()
-        {
-            return funcInt(paramInt);
+        {auto result = funcInt(paramInt);
+            if (callback)
+            {
+                callback(result);
+            }return result;
         }
     );
 }
@@ -75,12 +78,15 @@ float TestApi0::funcFloat(float paramFloat)
     return 0.0f;
 }
 
-std::future<float> TestApi0::funcFloatAsync(float paramFloat)
+std::future<float> TestApi0::funcFloatAsync(float paramFloat, std::function<void(float)> callback)
 {
-    return std::async(std::launch::async, [this,
+    return std::async(std::launch::async, [this, callback,
                     paramFloat]()
-        {
-            return funcFloat(paramFloat);
+        {auto result = funcFloat(paramFloat);
+            if (callback)
+            {
+                callback(result);
+            }return result;
         }
     );
 }
@@ -92,28 +98,34 @@ std::string TestApi0::funcString(const std::string& paramString)
     return std::string();
 }
 
-std::future<std::string> TestApi0::funcStringAsync(const std::string& paramString)
+std::future<std::string> TestApi0::funcStringAsync(const std::string& paramString, std::function<void(std::string)> callback)
 {
-    return std::async(std::launch::async, [this,
+    return std::async(std::launch::async, [this, callback,
                     paramString]()
-        {
-            return funcString(paramString);
+        {auto result = funcString(paramString);
+            if (callback)
+            {
+                callback(result);
+            }return result;
         }
     );
 }
 
-void TestApi0::funcVoid(int someParam)
+void TestApi0::funcVoid(int paramInt)
 {
-    (void) someParam; // suppress the 'Unreferenced Formal Parameter' warning.
+    (void) paramInt; // suppress the 'Unreferenced Formal Parameter' warning.
     // do business logic here
 }
 
-std::future<void> TestApi0::funcVoidAsync(int someParam)
+std::future<void> TestApi0::funcVoidAsync(int paramInt, std::function<void(void)> callback)
 {
-    return std::async(std::launch::async, [this,
-                    someParam]()
-        {
-            return funcVoid(someParam);
+    return std::async(std::launch::async, [this, callback,
+                    paramInt]()
+        {funcVoid(paramInt);
+            if (callback)
+            {
+                callback();
+            }
         }
     );
 }

@@ -1,7 +1,7 @@
 
 #include "api/generated/mqtt/testapi0client.h"
 
-#include "../helpers/mqtt_network_protocol_handler_for_test.hpp"
+#include "../mqtt_network_protocol_handler_for_test.hpp"
 #include "../../latency_helpers/latency_helpers.h"
 #include "../../scenario_templates/single_object_many_threads/executeTestFunction.h"
 

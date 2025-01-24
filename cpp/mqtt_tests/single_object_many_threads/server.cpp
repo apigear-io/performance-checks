@@ -1,7 +1,7 @@
 #include "api/generated/mqtt/testapi0service.h"
 #include "api/implementation/testapi0.h"
 #include "apigear/mqtt/mqttservice.h"
-#include "../helpers/test_message_topics.h"
+#include "../test_message_topics.h"
 #include <memory>
 #include <chrono>
 #include <iostream>

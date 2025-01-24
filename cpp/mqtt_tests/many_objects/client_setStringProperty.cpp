@@ -1,7 +1,7 @@
 #include "../../scenario_templates/many_objects/executeTestFunction.h"
-#include "../helpers/mqtt_network_protocol_handler_for_test.hpp"
-#include "../helpers/itestsink.h"
-#include "../helpers/prepare_test_data.h"
+#include "../mqtt_network_protocol_handler_for_test.hpp"
+#include "helpers/itestsink.h"
+#include "helpers/prepare_test_data.h"
 
 #include <memory>
 
