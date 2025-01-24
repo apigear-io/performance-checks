@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <condition_variable>
 
 
 class MqttHandlerForTest
@@ -15,6 +16,7 @@ public:
         port(portNumber)
     {
         m_client = std::make_unique<ApiGear::Mqtt::Client>("VeryUniqueClientId");
+        m_client->connect(m_client.get(), &ApiGear::Mqtt::Client::ready, [this](){ isConnectedFlag = true;});
     }
 
     void prepareConnection()
@@ -25,10 +27,9 @@ public:
     template<class TestData>
     void connectObjects(std::vector<TestData>& testData)
     {
-        while (!m_client->isReady())
-        {
-            // wait until ready to use.
-        }
+        std::unique_lock<std::mutex> lock(m_isConnectedMutex);
+        m_isConnected.wait_for(lock, std::chrono::milliseconds(500), [this]() {return isConnectedFlag == true; });
+        lock.unlock();
         for (auto& element : testData)
         {
             QString name = element.objectName();
@@ -39,11 +40,9 @@ public:
     template<class TestData>
     void connectObjects(TestData& testData)
     {
-
-        while (!m_client->isReady())
-        {
-            // wait until ready to use.
-        }
+        std::unique_lock<std::mutex> lock(m_isConnectedMutex);
+        m_isConnected.wait_for(lock, std::chrono::milliseconds(5000), [this]() {return isConnectedFlag == true; });
+        lock.unlock();
         QString name = testData.objectName();
         m_client->setRemoteProperty(TestMessages::clientStartsTestTopic,{name.toStdString()});
     }
@@ -109,4 +108,7 @@ private:
     QString host;
     uint32_t port;
     std::unique_ptr<ApiGear::Mqtt::Client> m_client;
+    std::condition_variable m_isConnected;
+    std::atomic<bool> isConnectedFlag{false};
+    std::mutex m_isConnectedMutex;
 };
