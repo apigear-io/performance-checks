@@ -1,8 +1,8 @@
 #include "../helpers/test_sink.h"
 #include "../../scenario_templates/single_object_many_threads/executeTestFunction.h"
 #include "../helpers/olink_network_protocol_handler_for_test.hpp"
-#include "../helpers/methodpropertyinttestdata.h"
-#include "../helpers/latency_helper.h"
+#include "../helpers/sync_int_method_testdata.h"
+#include "../../latency_helper/latency_helper.h"
 
 #include <memory>
 #include <vector>
@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
     OLinkHandlerForTest networkProtocolHandler(hostAddress, portNumber);
 
     std::vector<uint32_t> latencies(messages_number*sendThreadNumber,0u);
-    auto testObject = SyncMethodPropertyIntTestData(latencies);
+    auto testObject = SyncIntMethodTestData(latencies);
 
     auto calculateLatencies = [&latencies]()
     {

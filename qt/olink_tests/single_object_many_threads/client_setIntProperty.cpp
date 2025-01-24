@@ -2,7 +2,7 @@
 #include "api/api/api.h"
 #include "../../scenario_templates/single_object_many_threads/executeTestFunction.h"
 #include "../helpers/olink_network_protocol_handler_for_test.hpp"
-#include "../helpers/latency_helper.h"
+#include "../../latency_helper/latency_helper.h"
 
 #include <memory>
 #include <vector>
@@ -11,8 +11,8 @@
 class PropertyIntTestData
 {
 public:
-    PropertyIntTestData(std::vector<std::chrono::time_point<std::chrono::high_resolution_clock>>& latenciesStart,
-                        std::vector<std::chrono::time_point<std::chrono::high_resolution_clock>>& latenciesStop)
+    PropertyIntTestData(std::vector<chrono_hr_timepoint>& latenciesStart,
+                        std::vector<chrono_hr_timepoint>& latenciesStop)
         :m_latenciesStart(latenciesStart),
         m_latenciesStop(latenciesStop)
     {
@@ -35,8 +35,8 @@ public:
         sink->setPropInt(value + 1);
     }
 
-    std::vector<std::chrono::time_point<std::chrono::high_resolution_clock>>& m_latenciesStart;
-    std::vector<std::chrono::time_point<std::chrono::high_resolution_clock>>& m_latenciesStop;
+    std::vector<chrono_hr_timepoint>& m_latenciesStart;
+    std::vector<chrono_hr_timepoint>& m_latenciesStop;
 
     std::atomic<uint32_t> count{0};
 };
@@ -68,8 +68,8 @@ int main(int argc, char* argv[])
     auto hostAddress = "127.0.0.1";
     OLinkHandlerForTest networkProtocolHandler(hostAddress, portNumber);
 
-    std::vector<std::chrono::time_point<std::chrono::high_resolution_clock>> m_latenciesStart(messages_number * sendThreadNumber, std::chrono::time_point<std::chrono::high_resolution_clock>());
-    std::vector<std::chrono::time_point<std::chrono::high_resolution_clock>> m_latenciesStop(messages_number * sendThreadNumber, std::chrono::time_point<std::chrono::high_resolution_clock>());
+    std::vector<chrono_hr_timepoint> m_latenciesStart(messages_number * sendThreadNumber, chrono_hr_timepoint());
+    std::vector<chrono_hr_timepoint> m_latenciesStop(messages_number * sendThreadNumber, chrono_hr_timepoint());
     std::vector<uint32_t> m_latencies(messages_number * sendThreadNumber, 0);
     auto testObject = PropertyIntTestData(m_latenciesStart, m_latenciesStop);
 
