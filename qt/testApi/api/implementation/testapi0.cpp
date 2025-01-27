@@ -79,12 +79,12 @@ int TestApi0::funcInt(int paramInt)
 
 qreal TestApi0::funcFloat(qreal paramFloat)
 {
-    return 0.0f;
+    return paramFloat;
 }
 
 QString TestApi0::funcString(const QString& paramString)
 {
-    return QString();
+    return paramString;
 }
 
 void TestApi0::funcVoid(int paramInt)

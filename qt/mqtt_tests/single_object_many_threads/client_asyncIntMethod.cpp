@@ -1,6 +1,4 @@
-#include "../helpers/itestsink.h"
-#include "../helpers/methodinttestdata.h"
-#include "api/mqtt/mqtttestapi0.h"
+#include "../helpers/async_int_method_testdata.h"
 #include "../../scenario_templates/single_object_many_threads/executeTestFunction.h"
 #include "../helpers/mqtt_network_protocol_handler_for_test.hpp"
 #include <QtCore>
@@ -18,6 +16,7 @@ int main(int argc, char* argv[])
     QCoreApplication app(argc, argv);
     auto sendThreadNumber = 100u;
     auto messages_number = 500u;
+    auto total_messages_number = messages_number* sendThreadNumber;
     if (argc > 1)
     {
         char* p;
@@ -33,9 +32,15 @@ int main(int argc, char* argv[])
     QString address = "localhost";
     MqttHandlerForTest networkProtocolHandler(address, portNumber);
 
-    std::vector<uint32_t> latencies(messages_number*sendThreadNumber,0u);
-    AsyncMethodIntTestData testObject(networkProtocolHandler.getClient(), latencies);
-    auto clientThread = executeTestFunction(testObject, networkProtocolHandler, messages_number, sendThreadNumber);
+    std::vector<chrono_hr_timepoint> m_timeStart(total_messages_number, chrono_hr_timepoint());
+    std::vector<chrono_hr_timepoint> m_timeStop(total_messages_number, chrono_hr_timepoint());
+    auto mqttClientObject = std::make_shared<TestSink<api::MqttTestApi0,api::AbstractTestApi0>>(networkProtocolHandler.getClient());
+    AsyncIntMethodTestData testObject(mqttClientObject, m_timeStart, m_timeStop);
+    auto calculateLatencies = [&m_timeStart, &m_timeStop]()
+    {
+        calculateAndPrintLatencyParameters(m_timeStart, m_timeStop);
+    };
+    auto clientThread = executeTestFunction(testObject, networkProtocolHandler, messages_number, sendThreadNumber, calculateLatencies);
 
     return app.exec();
 }

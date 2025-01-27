@@ -1,5 +1,5 @@
-#ifndef SYNCMETHODPROPERTYINTTESTDATA_H
-#define SYNCMETHODPROPERTYINTTESTDATA_H
+#ifndef OLINK_SYNC_INT_METHOD_DATA_H
+#define OLINK_SYNC_INT_METHOD_DATA_H
 
 
 #include "test_sink.h"
@@ -8,8 +8,6 @@
 #include <vector>
 #include <chrono>
 #include <algorithm>
-#include <iostream>
-#include <iomanip>
 #include <QFuture>
 
 class SyncIntMethodTestData : public QObject
@@ -26,4 +24,4 @@ private:
     std::vector<uint32_t>& m_latencies;
 };
 
-#endif // SYNCMETHODPROPERTYINTTESTDATA_H
+#endif // OLINK_SYNC_INT_METHOD_DATA_H

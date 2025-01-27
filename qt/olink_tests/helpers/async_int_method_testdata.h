@@ -1,5 +1,5 @@
-#ifndef SYNCMETHODPROPERTYINTTESTDATA_H
-#define SYNCMETHODPROPERTYINTTESTDATA_H
+#ifndef OLINK_ASYNC_INT_METHOD_DATA_H
+#define OLINK_ASYNC_INT_METHOD_DATA_H
 
 
 #include "test_sink.h"
@@ -25,4 +25,4 @@ private:
     std::vector<QFuture<int>> m_futures;
 };
 
-#endif // SYNCMETHODPROPERTYINTTESTDATA_H
+#endif // OLINK_ASYNC_INT_METHOD_DATA_H

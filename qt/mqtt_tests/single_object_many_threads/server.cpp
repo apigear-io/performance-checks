@@ -27,8 +27,10 @@ public:
     {
         m_service.connect(&m_service, &ApiGear::Mqtt::ServiceAdapter::ready, [this](){
             subscriptionIdStart = m_service.subscribeTopic(TestMessages::clientStartsTestTopic,
+                                                            [](auto /*id*/, auto /*isConnected*/){},
                                                            [this](const auto&){ countStartMessages++;  qDebug()<< "started";});
             subscriptionIdStop = m_service.subscribeTopic(TestMessages::clientStopsTestTopic,
+                                                          [](auto /*id*/, auto /*isConnected*/){},
                                                           [this](const auto&){countStopMessages++; qDebug() << "stopped";});
         });
     }

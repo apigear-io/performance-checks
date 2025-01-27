@@ -1,50 +1,11 @@
-#include "../helpers/itestsink.h"
-#include "api/mqtt/mqtttestapi0.h"
 #include "../../scenario_templates/single_object_many_threads/executeTestFunction.h"
 #include "../helpers/mqtt_network_protocol_handler_for_test.hpp"
+#include "../helpers/aync_int_property_testdata.h"
 #include <QtCore>
 
 #include <memory>
 
 
-class PropertyIntTestData
-{
-public:
-    PropertyIntTestData(ApiGear::Mqtt::Client& client)
-    {
-        auto obj =  std::make_shared<TestSink<api::MqttTestApi0,api::AbstractTestApi0>>(client);
-        m_testFunction = [obj](uint32_t value)
-        {
-        // Add one, to avoid setting property to 0 as first call, 0 is default property and it won't be set for same value.
-            obj->setPropInt(value + 1);
-        };
-        sink = obj;
-    }
-
-    void testFunction(uint32_t value)
-    {
-        m_testFunction(value);
-    }
-
-    bool isReady() const
-    {
-        return sink->isReady();
-    }
-
-    const QString objectName() const
-    {
-        return sink->objectName();
-    }
-
-    bool allResponsesReceived(uint32_t messages_number) const
-    {
-        return sink->allResponsesReceived(messages_number);
-    }
-
-private:
-    std::function<void(uint32_t)> m_testFunction;
-    std::shared_ptr<ITestSink> sink;
-};
 
 /*
 By default test request property int change 1000 times from each of 100 threads.
@@ -56,6 +17,7 @@ int main(int argc, char* argv[])
     QCoreApplication app(argc, argv);
     auto sendThreadNumber = 100u;
     auto messages_number = 500u;
+    auto total_messages_number = sendThreadNumber * messages_number;
     if (argc > 1)
     {
         char* p;
@@ -70,10 +32,15 @@ int main(int argc, char* argv[])
     quint16 portNumber = 1883;
     QString address = "localhost";
     MqttHandlerForTest networkProtocolHandler(address, portNumber);
+    std::vector<chrono_hr_timepoint> m_timeStart(total_messages_number, chrono_hr_timepoint());
+    std::vector<chrono_hr_timepoint> m_timeStop(total_messages_number, chrono_hr_timepoint());
 
-    PropertyIntTestData testObject(networkProtocolHandler.getClient());
-    auto clientThread = executeTestFunction(testObject, networkProtocolHandler, messages_number, sendThreadNumber);
-
+    PropertyIntTestData testObject(networkProtocolHandler.getClient(), m_timeStart, m_timeStop);
+    auto calculateLatencies = [&m_timeStart, &m_timeStop]()
+    {
+        calculateAndPrintLatencyParameters(m_timeStart, m_timeStop);
+    };
+    auto clientThread = executeTestFunction(testObject, networkProtocolHandler, messages_number, sendThreadNumber, calculateLatencies);
     return app.exec();
 }
 
