@@ -1,16 +1,13 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "5.1",
+	"EngineAssociation": "5.4",
 	"Category": "",
 	"Description": "",
 	"Modules": [
 		{
 			"Name": "unreal_tests",
 			"Type": "Runtime",
-			"LoadingPhase": "Default",
-			"AdditionalDependencies": [
-				"CoreUObject"
-			]
+			"LoadingPhase": "Default"
 		}
 	],
 	"Plugins": [
@@ -21,11 +18,5 @@
 				"Editor"
 			]
 		}
-	],
-	"TargetPlatforms": [
-		"Linux",
-		"Windows",
-		"IOS",
-		"HoloLens"
 	]
 }

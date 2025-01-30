@@ -5,11 +5,11 @@ using System.Collections.Generic;
 
 public class unreal_testsTarget : TargetRules
 {
-	public unreal_testsTarget( TargetInfo Target) : base(Target)
+	public unreal_testsTarget(TargetInfo Target) : base(Target)
 	{
 		Type = TargetType.Game;
-		DefaultBuildSettings = BuildSettingsVersion.V2;
-		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_1;
+		DefaultBuildSettings = BuildSettingsVersion.V5;
+		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_4;
 		ExtraModuleNames.Add("unreal_tests");
 	}
 }
