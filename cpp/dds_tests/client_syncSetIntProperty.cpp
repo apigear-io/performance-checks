@@ -5,6 +5,7 @@
 #include <iomanip>
 #include "dds_client.h"
 #include <vector>
+#include "HelloWorldSubscriber.h"
 
 int main(int argc, char* argv[])
 {
@@ -22,7 +23,7 @@ int main(int argc, char* argv[])
         sendThreadNumber = strtol(argv[2], &p, 10);
     }
 
-    TestApiClient client;
+    Cpp::Api::TestApiClient client;
     client.init();
 
     bool keepRunning = true;
@@ -31,7 +32,7 @@ int main(int argc, char* argv[])
     do {
         std::cout << "Enter command:" << std::endl;
         getline(std::cin, cmd);
-
+ 
         if (cmd == "quit") {
             keepRunning = false;
         }

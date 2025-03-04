@@ -6,6 +6,7 @@
 #include <iostream>
 #include <algorithm>
 #include <thread>
+#include "HelloWorldPublisher.h"
 
 /*
 * Helper object that subscribes for test messages from remote clients.
@@ -53,6 +54,9 @@ int main(int argc, char* argv[])
     TestApi0Service sourceService(source);
     sourceService.init();
     TestWatcher testWatcher;
+    //HelloWorldPublisher hpub;
+    //hpub.init(false);
+    //hpub.run(10, 10);
 
     bool testStarted = false;
     // Will be overwritten with receiving link message
@@ -61,16 +65,16 @@ int main(int argc, char* argv[])
     bool keepRunning = true;
     int p = 116;
     std::string cmd;
-    do {
+   do {
         std::cout << "Enter command:" << std::endl;
         getline(std::cin, cmd);
-
+   
         if (cmd == "quit") {
             keepRunning = false;
         }
         if (cmd == "prop")
         {
-            source->setPropInt(5);
+            source->setPropInt(source->getPropInt() +1);
         }
         if (cmd == "sig")
         {
