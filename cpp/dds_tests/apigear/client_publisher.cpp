@@ -12,6 +12,14 @@
 #include <fastdds/dds/subscriber/SampleInfo.hpp>
 
 
+namespace {
+    void fill_topics_matched(std::map<std::string, bool>& map_to_fill)
+    {
+        map_to_fill["prop_propInt"] = false;
+    }
+}
+
+
 ClientPublisher::ClientPublisher(eprosima::fastdds::dds::DomainParticipant* participant)
     :m_participant(participant)
 {
@@ -24,7 +32,8 @@ ClientPublisher::ClientPublisher(eprosima::fastdds::dds::DomainParticipant* part
 
 void ClientPublisher::init()
 {
-    m_propertyChangedWriter = createTopicPublisher("prop.propInt", "HelloWorld");
+    fill_topics_matched(topics_matched);
+    m_propertyChangedWriter = createTopicPublisher("prop_propInt", "HelloWorld");
     //mp_methodWriter = createTopicPublisher("rpc.funcInt", "HelloWorld");
     m_requests_pool = std::make_unique<ApiGear::Utilities::ThreadPool>(1);
 };
@@ -50,7 +59,7 @@ ClientPublisher::~ClientPublisher() {
 
 eprosima::fastdds::dds::DataWriter* ClientPublisher::createTopicPublisher(std::string topic, std::string dataType)
 {
-    eprosima::fastdds::dds::Topic* topic_obj = m_participant->create_topic("prop_propInt", "HelloWorld", eprosima::fastdds::dds::TOPIC_QOS_DEFAULT);
+    eprosima::fastdds::dds::Topic* topic_obj = m_participant->create_topic(topic, dataType, eprosima::fastdds::dds::TOPIC_QOS_DEFAULT);
     if (!topic_obj)
     {
         std::cerr << "Failed to create Topic: " << topic << std::endl;
@@ -63,23 +72,29 @@ eprosima::fastdds::dds::DataWriter* ClientPublisher::createTopicPublisher(std::s
 
 void ClientPublisher::on_publication_matched(eprosima::fastdds::dds::DataWriter* writer, const eprosima::fastdds::dds::PublicationMatchedStatus& info)
 {
-    if (n_matched < info.total_count)
+    auto element = topics_matched.find(writer->get_topic()->get_name());
+    if (element == topics_matched.end())
     {
-        std::cout << "Publisher matched." << std::endl;
-        firstConnected = true;
+        //TODO log unexpected topic
+        return;
     }
-    else if (n_matched > info.total_count)
+    element->second = info.current_count != 0;
+
+    if (info.current_count_change > 0)
     {
-        std::cout << "Publisher unmatched." << std::endl;
+        std::cout << "Publisher matched. " << writer->get_topic()->get_name() << std::endl;
     }
-    n_matched = info.total_count;
-    //TODO check if matched for all topics!
+    else if (info.current_count_change < 0)
+    {
+        std::cout << "Publisher unmatched. " << writer->get_topic()->get_name() << std::endl;
+    }
 }
 
-bool ClientPublisher::isReady()
+bool ClientPublisher::_is_ready()
 {
-    std::cout << "ready ? " << firstConnected && n_matched;
-    return firstConnected && n_matched > 0;
+    bool all_matched = std::find_if(topics_matched.begin(), topics_matched.end(), [](auto& element) {return element.second == false; })
+        == topics_matched.end();
+    return topics_matched.size() > 0 && all_matched;
 }
 
 void ClientPublisher::run(uint32_t samples, uint32_t sleep)
@@ -90,11 +105,6 @@ void ClientPublisher::run(uint32_t samples, uint32_t sleep)
         {
             --i;
         }
-        else
-        {
-            std::cout << "Message: " << hello_.message() << " with index: " << hello_.index()
-                << " SENT" << std::endl;
-        }
         std::this_thread::sleep_for(std::chrono::milliseconds(sleep));
     }
 
@@ -102,10 +112,14 @@ void ClientPublisher::run(uint32_t samples, uint32_t sleep)
 
 bool ClientPublisher::publish(int value)
 {
-    if (isReady())
+    if (_is_ready())
     {
+        HelloWorld hello_;
+        hello_.message("pubProp");
         hello_.index(value);
         m_propertyChangedWriter->write(&hello_);
+        std::cout << "Message: " << hello_.message() << " with index: " << hello_.index()
+            << " SENT" << std::endl;
         return true;
     }
     return false;

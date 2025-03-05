@@ -54,9 +54,6 @@ int main(int argc, char* argv[])
     TestApi0Service sourceService(source);
     sourceService.init();
     TestWatcher testWatcher;
-    //HelloWorldPublisher hpub;
-    //hpub.init(false);
-    //hpub.run(10, 10);
 
     bool testStarted = false;
     // Will be overwritten with receiving link message

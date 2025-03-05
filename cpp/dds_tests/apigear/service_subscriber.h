@@ -21,7 +21,7 @@ public:
     eprosima::fastdds::dds::DataReader* createTopicSubscriber(std::string topic, std::string dataType);
     void on_subscription_matched(eprosima::fastdds::dds::DataReader* reader, const eprosima::fastdds::dds::SubscriptionMatchedStatus& info) override;
 
-    int n_matched;
+    bool _is_ready();
 private:
     void on_data_available(eprosima::fastdds::dds::DataReader* reader) override;
     std::shared_ptr< Cpp::Api::ITestApi0> m_api;
@@ -29,5 +29,5 @@ private:
     eprosima::fastdds::dds::DomainParticipant* m_paritcipant;
     eprosima::fastdds::dds::Subscriber* m_subscriber = nullptr;
     std::vector<eprosima::fastdds::dds::DataReader*> m_topicReaders ;
-    HelloWorld message;
+    std::map<std::string, bool> topics_matched;
 };

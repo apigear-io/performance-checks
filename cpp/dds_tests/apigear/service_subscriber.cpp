@@ -10,17 +10,22 @@
 #include <fastdds/dds/core/LoanableSequence.hpp>
 #include <fastdds/dds/subscriber/SampleInfo.hpp>
 
-
+namespace {
+    void fill_topics_matched(std::map<std::string, bool>& map_to_fill)
+    {
+        map_to_fill["prop_propInt"] = false;
+    }
+}
 
 ServiceSubscriber::ServiceSubscriber(eprosima::fastdds::dds::DomainParticipant* paritcipant, std::shared_ptr< Cpp::Api::ITestApi0> api)
     : m_paritcipant(paritcipant),
-    m_api(api),
-    n_matched(0)
+    m_api(api)
 {
     m_subscriber = m_paritcipant->create_subscriber(eprosima::fastdds::dds::SUBSCRIBER_QOS_DEFAULT, nullptr);
 }
 void ServiceSubscriber::init() 
 {
+    fill_topics_matched(topics_matched);
     m_topicReaders.push_back(createTopicSubscriber("prop_propInt", "HelloWorld"));
 }
 eprosima::fastdds::dds::DataReader* ServiceSubscriber::createTopicSubscriber(std::string topic, std::string dataType)
@@ -48,19 +53,33 @@ ServiceSubscriber::~ServiceSubscriber()
     }
 }
 
+bool ServiceSubscriber::_is_ready()
+{
+    bool all_matched = std::find_if(topics_matched.begin(), topics_matched.end(), [](auto& element) {return element.second == false; })
+        == topics_matched.end();
+    return topics_matched.size() > 0 && all_matched;
+}
+
 void ServiceSubscriber::on_subscription_matched(
     eprosima::fastdds::dds::DataReader* reader,
     const eprosima::fastdds::dds::SubscriptionMatchedStatus& info)
 {
-    if (n_matched < info.total_count)
+    auto element = topics_matched.find(reader->get_topicdescription()->get_name());
+    if (element == topics_matched.end())
     {
-        std::cout << "Subscriber matched for DataReader: " << reader << std::endl;
+        //TODO log unexpected topic
+        return;
     }
-    else if (n_matched > info.total_count)
+    element->second = info.current_count != 0;
+
+    if (info.current_count_change > 0)
     {
-        std::cout << "Subscriber unmatched for DataReader: " << reader << std::endl;
+        std::cout << "Subscriber matched." << element->first << std::endl;
     }
-    n_matched = info.total_count;
+    else if (info.current_count_change < 0)
+    {
+        std::cout << "Subscriber unmatched." << element->first << std::endl;
+    }
 }
 
 void ServiceSubscriber::on_data_available(eprosima::fastdds::dds::DataReader* reader)

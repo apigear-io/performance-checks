@@ -23,7 +23,7 @@ int main(int argc, char* argv[])
         sendThreadNumber = strtol(argv[2], &p, 10);
     }
 
-    Cpp::Api::TestApiClient client;
+    Cpp::Api::TestApiClient client("client" + std::to_string(messages_number));
     client.init();
 
     bool keepRunning = true;

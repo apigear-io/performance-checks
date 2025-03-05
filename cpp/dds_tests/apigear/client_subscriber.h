@@ -10,6 +10,7 @@
 #include <iostream>
 #include "api/generated/api/api.h"
 #include "api/generated/core/testapi0.data.h"
+#include <map>
 
 
 #include "../HelloWorld.h"
@@ -28,8 +29,9 @@ public:
     {
         return m_publisher;
     }
-    int n_matched;
+    bool _is_ready();
 private:
+    int n_matched;
     void on_data_available(eprosima::fastdds::dds::DataReader* reader) override;
     std::vector< eprosima::fastdds::dds::Topic*> topics;
     eprosima::fastdds::dds::DomainParticipant* m_paritcipant;
@@ -37,4 +39,5 @@ private:
     std::vector<eprosima::fastdds::dds::DataReader*> m_topicReaders ;
     Cpp::Api::TestApi0Data m_data;
     std::shared_ptr<Cpp::Api::ITestApi0Publisher> m_publisher;
+    std::map<std::string, bool> topics_matched;
 };

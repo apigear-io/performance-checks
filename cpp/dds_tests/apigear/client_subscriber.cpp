@@ -12,6 +12,14 @@
 #include "api/generated/core/testapi0.publisher.h"
 
 
+namespace {
+    void fill_topics_matched(std::map<std::string, bool>& map_to_fill)
+    {
+        map_to_fill["set_propInt"] = false;
+        map_to_fill["sig_sigInt"] = false;
+    }
+}
+
 
 ClientSubscriber::ClientSubscriber(eprosima::fastdds::dds::DomainParticipant* paritcipant)
     : m_paritcipant(paritcipant),
@@ -22,6 +30,7 @@ ClientSubscriber::ClientSubscriber(eprosima::fastdds::dds::DomainParticipant* pa
 }
 void ClientSubscriber::init()
 {
+    fill_topics_matched(topics_matched);
     m_topicReaders.push_back(createTopicSubscriber("set_propInt", "HelloWorld"));
     m_topicReaders.push_back(createTopicSubscriber("sig_sigInt", "HelloWorld"));
 }
@@ -50,19 +59,33 @@ ClientSubscriber::~ClientSubscriber()
     }
 }
 
+bool ClientSubscriber::_is_ready()
+{
+    bool all_matched = std::find_if(topics_matched.begin(), topics_matched.end(), [](auto& element) {return element.second == false; })
+        == topics_matched.end();
+    return topics_matched.size() > 0 && all_matched;
+}
+
 void ClientSubscriber::on_subscription_matched(
     eprosima::fastdds::dds::DataReader* reader,
     const eprosima::fastdds::dds::SubscriptionMatchedStatus& info)
 {
-    if (n_matched < info.total_count)
+    auto element = topics_matched.find(reader->get_topicdescription()->get_name());
+    if (element == topics_matched.end())
     {
-        std::cout << "Subscriber matched for DataReader: " << reader << std::endl;
+        //TODO log unexpected topic
+        return;
     }
-    else if (n_matched > info.total_count)
+    element->second = info.current_count != 0;
+
+    if (info.current_count_change > 0)
     {
-        std::cout << "Subscriber unmatched for DataReader: " << reader << std::endl;
+        std::cout << "Subscriber matched." << element->first << std::endl;
     }
-    n_matched = info.total_count;
+    else if (info.current_count_change < 0)
+    {
+        std::cout << "Subscriber unmatched." << element->first <<  std::endl;
+    }
 }
 
 void ClientSubscriber::on_data_available(eprosima::fastdds::dds::DataReader* reader)

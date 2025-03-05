@@ -12,8 +12,14 @@
 #include <fastdds/dds/subscriber/SampleInfo.hpp>
 
 namespace {
-    uint32_t numberOfSubs = 2;
+
+    void fill_topics_matched(std::map<std::string, bool>& map_to_fill)
+    {
+        map_to_fill["set_propInt"] = false;
+        map_to_fill["sig_sigInt"] = false;
+    }
 }
+
 
 ServicePublisher::ServicePublisher(eprosima::fastdds::dds::DomainParticipant* participant)
     :m_participant(participant)
@@ -27,6 +33,7 @@ ServicePublisher::ServicePublisher(eprosima::fastdds::dds::DomainParticipant* pa
 
 void ServicePublisher::init()
 {
+    fill_topics_matched(topics_matched);
     m_propertyChangedWriter = createTopicPublisher("set_propInt", "HelloWorld");
     mp_singalEmitWriter = createTopicPublisher("sig_sigInt", "HelloWorld");
     m_requests_pool = std::make_unique<ApiGear::Utilities::ThreadPool>(1);
@@ -66,61 +73,54 @@ eprosima::fastdds::dds::DataWriter* ServicePublisher::createTopicPublisher(std::
 
 void ServicePublisher::on_publication_matched(eprosima::fastdds::dds::DataWriter* writer, const eprosima::fastdds::dds::PublicationMatchedStatus& info)
 {
-    if (n_matched < info.total_count)
+    auto element = topics_matched.find(writer->get_topic()->get_name());
+    if (element == topics_matched.end())
+    {
+        //TODO log unexpected topic
+        return;
+    }
+    element->second = info.current_count != 0;
+
+    if (info.current_count_change > 0)
     {
         std::cout << "Publisher matched." << std::endl;
-        firstConnected = true;
     }
-    else if (n_matched > info.total_count)
+    else if (info.current_count_change < 0)
     {
         std::cout << "Publisher unmatched." << std::endl;
     }
-    n_matched = info.total_count;
-    //TODO check if matched for all topics!
-}
+ }
 
-bool ServicePublisher::isReady()
+bool ServicePublisher::_is_ready()
 {
-    std::cout << "ready ? " << firstConnected && n_matched;
-    return firstConnected && n_matched >= numberOfSubs;
+    bool all_matched = std::find_if(topics_matched.begin(), topics_matched.end(), [](auto& element) {return element.second == false; })
+        == topics_matched.end();
+    return topics_matched.size() > 0 && all_matched;
 }
 
-void ServicePublisher::run(uint32_t samples, uint32_t sleep)
-{
-    for (uint32_t i = 0; i < samples; ++i)
-    {
-        if (!publishProp(i))
-        {
-            --i;
-        }
-        else
-        {
-            std::cout << "Message: " << hello_.message() << " with index: " << hello_.index()
-                << " SENT" << std::endl;
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(sleep));
-    }
-
-}
 
 bool ServicePublisher::publishProp(int value)
 {
-   // if (isReady())
+    if (_is_ready())
     {
+        HelloWorld hello_;
+        hello_.message("pub set prop");
         hello_.index(value);
         m_propertyChangedWriter->write(&hello_);
         return true;
     }
-    //return false;
+    return false;
 }
 
 bool ServicePublisher::publishSig(int value)
 {
-   // if (isReady())
+    if (_is_ready())
     {
+        HelloWorld hello_;
+        hello_.message("pub Signal");
         hello_.index(value);
         mp_singalEmitWriter->write(&hello_);
         return true;
     }
-   // return false;
+    return false;
 }

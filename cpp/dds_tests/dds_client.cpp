@@ -17,11 +17,11 @@ using namespace eprosima::fastrtps;
 using namespace eprosima::fastrtps::rtps;
 using namespace Cpp::Api;
 
-TestApiClient::TestApiClient()
+TestApiClient::TestApiClient(std::string name)
     : m_helloType(new HelloWorldPubSubType())
 {
     eprosima::fastdds::dds::DomainParticipantQos participant_qos = eprosima::fastdds::dds::PARTICIPANT_QOS_DEFAULT;
-    participant_qos.name("cTA0");
+    participant_qos.name(name);
     mp_participant = eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->create_participant(0, participant_qos);
 
     if (mp_participant == nullptr)

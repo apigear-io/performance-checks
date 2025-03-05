@@ -33,7 +33,7 @@ namespace Api {
 class TestApiClient //: public Cpp::Api::ITestApi0
 {
 public:
-    TestApiClient();
+    TestApiClient(std::string name);
     virtual ~TestApiClient();
     void init();
 

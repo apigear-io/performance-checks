@@ -34,7 +34,7 @@ public:
     ClientPublisher(eprosima::fastdds::dds::DomainParticipant* participant);
     ~ClientPublisher();
     eprosima::fastdds::dds::DataWriter* createTopicPublisher(std::string topic, std::string dataType);
-    bool isReady();
+    bool _is_ready();
     void init();
     void run(uint32_t samples, uint32_t sleep);
     bool publish(int value);
@@ -47,9 +47,7 @@ private:
     std::unique_ptr<ApiGear::Utilities::ThreadPool> m_requests_pool;
 
     std::vector< eprosima::fastdds::dds::Topic*> topics;
-    //TODO temporaray public, should be stored privetly in map, and some getter should be given, or just returning a callback;
     eprosima::fastdds::dds::DataWriter* m_propertyChangedWriter = nullptr;
     eprosima::fastdds::dds::DataWriter* mp_methodWriter = nullptr;
-    // TODO this should be solved differently not as member
-    HelloWorld hello_;
+    std::map<std::string, bool> topics_matched;
 };
