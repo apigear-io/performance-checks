@@ -1,13 +1,10 @@
 #pragma once
 
 
-#include "HelloWorldPubSubTypes.h"
-
 #include <fastrtps/fastrtps_fwd.h>
 #include <fastrtps/attributes/PublisherAttributes.h>
 #include <fastrtps/publisher/PublisherListener.h>
 
-#include "HelloWorldPubSubTypes.h"
 
 #include <fastrtps/fastrtps_fwd.h>
 #include <fastrtps/attributes/SubscriberAttributes.h>
@@ -23,8 +20,6 @@
 #include "apigear/client_subscriber.h"
 #include "api/generated/api/api.h"
 #include "api/generated/core/testapi0.data.h"
-#include "HelloWorldPublisher.h"
-#include "HelloWorld.h"
 
 namespace Cpp{
 

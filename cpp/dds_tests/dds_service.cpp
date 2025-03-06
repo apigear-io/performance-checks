@@ -10,7 +10,7 @@
 #include <fastdds/dds/subscriber/DataReaderListener.hpp>
 #include <fastdds/dds/core/LoanableSequence.hpp>
 #include <fastdds/dds/subscriber/SampleInfo.hpp>
-
+#include "types/HelloWorldPubSubTypes.h"
 
 #include <thread>
 using namespace eprosima::fastrtps;

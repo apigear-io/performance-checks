@@ -1,12 +1,7 @@
 #pragma once
 
 
-#include "HelloWorldPubSubTypes.h"
 #include "api/generated/api/api.h"
-#include "HelloWorldSubscriber.h"
-
-#include "HelloWorldPubSubTypes.h"
-
 
 #include <fastdds/dds/subscriber/DataReaderListener.hpp>
 #include <fastdds/dds/subscriber/DataReader.hpp>
@@ -15,7 +10,6 @@
 #include <fastdds/dds/publisher/DataWriterListener.hpp>
 #include <iostream>
 
-#include "HelloWorld.h"
 #include "apigear/service_subscriber.h"
 #include "apigear/service_publisher.h"
 

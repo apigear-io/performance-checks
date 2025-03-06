@@ -5,7 +5,6 @@
 #include <iomanip>
 #include "dds_client.h"
 #include <vector>
-#include "HelloWorldSubscriber.h"
 
 int main(int argc, char* argv[])
 {

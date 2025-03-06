@@ -6,7 +6,6 @@
 #include <iostream>
 #include <algorithm>
 #include <thread>
-#include "HelloWorldPublisher.h"
 
 /*
 * Helper object that subscribes for test messages from remote clients.
@@ -49,7 +48,6 @@ private:
 
 int main(int argc, char* argv[])
 {
-   // auto service = std::make_shared<ApiGear::Nats::Service>();
     auto source = std::make_shared<Cpp::Api::TestApi0>();
     TestApi0Service sourceService(source);
     sourceService.init();

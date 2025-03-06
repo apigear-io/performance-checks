@@ -1,6 +1,6 @@
 #include "api/generated/api/api.h"
 
-#include "../HelloWorldPubSubTypes.h"
+#include "../types/HelloWorldPubSubTypes.h"
 
 #include <fastdds/dds/subscriber/DataReaderListener.hpp>
 #include <fastdds/dds/subscriber/DataReader.hpp>
@@ -13,7 +13,7 @@
 #include <map>
 
 
-#include "../HelloWorld.h"
+#include "../types/HelloWorld.h"
 
 class ClientSubscriber : public eprosima::fastdds::dds::DataReaderListener
 {

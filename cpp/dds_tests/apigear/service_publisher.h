@@ -5,7 +5,7 @@
 #include <fastrtps/attributes/PublisherAttributes.h>
 #include <fastrtps/publisher/PublisherListener.h>
 
-#include "../HelloWorldPubSubTypes.h"
+#include "../types/HelloWorldPubSubTypes.h"
 
 #include <fastrtps/fastrtps_fwd.h>
 #include <fastrtps/attributes/SubscriberAttributes.h>
@@ -19,7 +19,7 @@
 #include <iostream>
 #include <memory>
 
-#include "../HelloWorld.h"
+#include "../types/HelloWorld.h"
 namespace ApiGear {
 
     namespace Utilities {
