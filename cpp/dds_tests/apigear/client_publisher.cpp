@@ -10,12 +10,15 @@
 #include <fastdds/dds/subscriber/DataReaderListener.hpp>
 #include <fastdds/dds/core/LoanableSequence.hpp>
 #include <fastdds/dds/subscriber/SampleInfo.hpp>
+#include <fastdds/rtps/common/WriteParams.h>
+#include "../types/sample.h"
 
 
 namespace {
     void fill_topics_matched(std::map<std::string, bool>& map_to_fill)
     {
         map_to_fill["prop_propInt"] = false;
+        map_to_fill["rpc_funcInt"] = false;
     }
 }
 
@@ -34,14 +37,14 @@ void ClientPublisher::init()
 {
     fill_topics_matched(topics_matched);
     m_propertyChangedWriter = createTopicPublisher("prop_propInt", "HelloWorld");
-    //mp_methodWriter = createTopicPublisher("rpc.funcInt", "HelloWorld");
+    m_method_funcIntWriter = createTopicPublisher("rpc_funcInt", "sample");
     m_requests_pool = std::make_unique<ApiGear::Utilities::ThreadPool>(1);
 };
 
 ClientPublisher::~ClientPublisher() {
-    if (mp_methodWriter != nullptr)
+    if (m_method_funcIntWriter != nullptr)
     {
-        mp_publisher->delete_datawriter(mp_methodWriter);
+        mp_publisher->delete_datawriter(m_method_funcIntWriter);
     }
     if (m_propertyChangedWriter != nullptr)
     {
@@ -123,4 +126,25 @@ bool ClientPublisher::publish(int value)
         return true;
     }
     return false;
+}
+
+//should this be by copy?
+eprosima::fastrtps::rtps::SampleIdentity ClientPublisher::request_funcInt(int value)
+{
+    if (_is_ready())
+    {
+        // Taking the mutex here to avoid taking a reply on the on_data_available callback
+        // coming from a very fast server who replied before the request_status_ entry was set
+       // std::lock_guard<std::mutex> lock(mtx_);
+
+        eprosima::fastrtps::rtps::WriteParams params;
+        sample message;
+        message.index(value);
+        message.key_value();
+        m_method_funcIntWriter->write(&message, params);
+        std::cout << "Method call with index: " << message.index() << " SENT" << std::endl;
+        return params.sample_identity();
+    }
+    std::cout << "Could not send yet" << std::endl;
+    return eprosima::fastrtps::rtps::SampleIdentity();
 }

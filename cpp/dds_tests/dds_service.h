@@ -36,7 +36,9 @@ private:
     std::unique_ptr<ServiceSubscriber> m_ServiceSubscriber;
     std::unique_ptr<ServicePublisher> m_ServicePublisher;
 
+
+
     std::shared_ptr< Cpp::Api::ITestApi0> m_api;
-    eprosima::fastdds::dds::TypeSupport m_helloType;
+    std::vector<eprosima::fastdds::dds::TypeSupport> m_types;
     eprosima::fastdds::dds::DomainParticipant* mp_participant = nullptr;
 };

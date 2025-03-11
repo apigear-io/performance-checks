@@ -9,17 +9,21 @@
 #include <fastdds/dds/subscriber/DataReaderListener.hpp>
 #include <fastdds/dds/core/LoanableSequence.hpp>
 #include <fastdds/dds/subscriber/SampleInfo.hpp>
+#include "../types/sample.h"
+#include <fastdds/rtps/common/InstanceHandle.h>
 
 namespace {
     void fill_topics_matched(std::map<std::string, bool>& map_to_fill)
     {
         map_to_fill["prop_propInt"] = false;
+        map_to_fill["rpc_funcInt"] = false;
     }
 }
 
-ServiceSubscriber::ServiceSubscriber(eprosima::fastdds::dds::DomainParticipant* paritcipant, std::shared_ptr< Cpp::Api::ITestApi0> api)
+ServiceSubscriber::ServiceSubscriber(eprosima::fastdds::dds::DomainParticipant* paritcipant, std::shared_ptr< Cpp::Api::ITestApi0> api, IMethodResonder& responder)
     : m_paritcipant(paritcipant),
-    m_api(api)
+    m_api(api),
+    m_responder(responder)
 {
     m_subscriber = m_paritcipant->create_subscriber(eprosima::fastdds::dds::SUBSCRIBER_QOS_DEFAULT, nullptr);
 }
@@ -27,6 +31,7 @@ void ServiceSubscriber::init()
 {
     fill_topics_matched(topics_matched);
     m_topicReaders.push_back(createTopicSubscriber("prop_propInt", "HelloWorld"));
+    m_topicReaders.push_back(createTopicSubscriber("rpc_funcInt", "sample"));
 }
 eprosima::fastdds::dds::DataReader* ServiceSubscriber::createTopicSubscriber(std::string topic, std::string dataType)
 {
@@ -96,6 +101,34 @@ void ServiceSubscriber::on_data_available(eprosima::fastdds::dds::DataReader* re
         {
             std::cout << "Received property changed REQ int: " << l_message.index() << std::endl;
             m_api->setPropInt(l_message.index());
+        }
+    }
+    if (reader->get_topicdescription()->get_name() == "rpc_funcInt")
+    {
+        sample l_message;
+        if (reader->take_next_sample(&l_message, &info) == ReturnCode_t::RETCODE_OK)
+        {
+            auto client_guid_prefix = eprosima::fastrtps::rtps::iHandle2GUID(info.publication_handle).guidPrefix;
+            auto request_id = info.sample_identity.sequence_number();
+
+            std::cout<<"Request with ID '" << request_id << "' received from client " << client_guid_prefix << std::endl;
+
+            auto result = m_api->funcInt(l_message.index());
+
+            // Prepare the reply
+            sample reply;
+            auto key = l_message.key_value();
+            reply.key_value(key);
+            std::cout << "key value " << reply.key_value()<< " "<< key << std::endl;
+            reply.index(result);
+
+            // Prepare the WriteParams to link the reply to the request
+            eprosima::fastrtps::rtps::WriteParams params;
+            params.related_sample_identity().writer_guid(info.sample_identity.writer_guid());
+            params.related_sample_identity().sequence_number(info.sample_identity.sequence_number());
+
+            m_responder.sendResp_funcInt(reply, params);
+
         }
     }
 }

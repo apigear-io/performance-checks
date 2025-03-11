@@ -8,6 +8,7 @@
 #include <fastdds/dds/publisher/DataWriter.hpp>
 #include <fastdds/dds/publisher/DataWriterListener.hpp>
 #include <iostream>
+#include "service_publisher.h"
 
 #include "../types/HelloWorld.h"
 
@@ -15,7 +16,7 @@ class ServiceSubscriber : public eprosima::fastdds::dds::DataReaderListener
 {
 public:
 
-    ServiceSubscriber(eprosima::fastdds::dds::DomainParticipant* paritcipant, std::shared_ptr< Cpp::Api::ITestApi0> api);
+    ServiceSubscriber(eprosima::fastdds::dds::DomainParticipant* paritcipant, std::shared_ptr< Cpp::Api::ITestApi0> api, IMethodResonder& responder);
     void init();
     ~ServiceSubscriber();
     eprosima::fastdds::dds::DataReader* createTopicSubscriber(std::string topic, std::string dataType);
@@ -29,5 +30,6 @@ private:
     eprosima::fastdds::dds::DomainParticipant* m_paritcipant;
     eprosima::fastdds::dds::Subscriber* m_subscriber = nullptr;
     std::vector<eprosima::fastdds::dds::DataReader*> m_topicReaders ;
+    IMethodResonder& m_responder;
     std::map<std::string, bool> topics_matched;
 };

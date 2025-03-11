@@ -38,16 +38,16 @@ public:
     void init();
     void run(uint32_t samples, uint32_t sleep);
     bool publish(int value);
+    eprosima::fastrtps::rtps::SampleIdentity request_funcInt(int value);
 private:
     eprosima::fastdds::dds::DomainParticipant* m_participant;
     void on_publication_matched(eprosima::fastdds::dds::DataWriter* writer, const eprosima::fastdds::dds::PublicationMatchedStatus& info) override;
-    int n_matched = 0;
     bool firstConnected = false;
     eprosima::fastdds::dds::Publisher* mp_publisher = nullptr;
     std::unique_ptr<ApiGear::Utilities::ThreadPool> m_requests_pool;
 
     std::vector< eprosima::fastdds::dds::Topic*> topics;
     eprosima::fastdds::dds::DataWriter* m_propertyChangedWriter = nullptr;
-    eprosima::fastdds::dds::DataWriter* mp_methodWriter = nullptr;
+    eprosima::fastdds::dds::DataWriter* m_method_funcIntWriter = nullptr;
     std::map<std::string, bool> topics_matched;
 };

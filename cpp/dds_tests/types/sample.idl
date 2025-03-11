@@ -1,0 +1,4 @@
+struct sample{
+    octet index;
+    @Key string key_value;
+};

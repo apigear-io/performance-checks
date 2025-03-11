@@ -20,6 +20,9 @@
 #include <memory>
 
 #include "../types/HelloWorld.h"
+#include "../types/sample.h"
+
+
 namespace ApiGear {
 
     namespace Utilities {
@@ -27,18 +30,25 @@ namespace ApiGear {
     }
 }
 
+class IMethodResonder
+{
+public:
+    virtual void sendResp_funcInt(sample reply, eprosima::fastrtps::rtps::WriteParams params) = 0;
+};
 
-class ServicePublisher :public eprosima::fastdds::dds::DataWriterListener
+
+class ServicePublisher :public eprosima::fastdds::dds::DataWriterListener, public IMethodResonder
 {
 public:
     ServicePublisher(eprosima::fastdds::dds::DomainParticipant* participant);
     ~ServicePublisher();
-    eprosima::fastdds::dds::DataWriter* createTopicPublisher(std::string topic, std::string dataType);
     void init();
     bool publishProp(int value);
     bool publishSig(int value);
     bool _is_ready();
+    void sendResp_funcInt(sample reply, eprosima::fastrtps::rtps::WriteParams params) override;
 private:
+    eprosima::fastdds::dds::DataWriter* createTopicPublisher(std::string topic, std::string dataType);
     eprosima::fastdds::dds::DomainParticipant* m_participant;
     void on_publication_matched(eprosima::fastdds::dds::DataWriter* writer, const eprosima::fastdds::dds::PublicationMatchedStatus& info) override;
 
@@ -48,5 +58,6 @@ private:
     std::vector< eprosima::fastdds::dds::Topic*> topics;
     eprosima::fastdds::dds::DataWriter* m_propertyChangedWriter = nullptr;
     eprosima::fastdds::dds::DataWriter* mp_singalEmitWriter = nullptr;
+    eprosima::fastdds::dds::DataWriter* m_funcIntRespWriter = nullptr;
     std::map<std::string, bool> topics_matched;
 };

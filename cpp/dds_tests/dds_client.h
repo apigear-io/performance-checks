@@ -37,7 +37,7 @@ public:
 private:
     std::unique_ptr<ClientPublisher> m_ClientPublisher;
     std::unique_ptr<ClientSubscriber> m_ClientSubscriber;
-    eprosima::fastdds::dds::TypeSupport m_helloType;
+    std::vector<eprosima::fastdds::dds::TypeSupport> m_types;
     eprosima::fastdds::dds::DomainParticipant* mp_participant = nullptr;
 
 };

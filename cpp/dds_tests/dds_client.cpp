@@ -12,6 +12,7 @@
 #include <fastdds/dds/core/LoanableSequence.hpp>
 #include <fastdds/dds/subscriber/SampleInfo.hpp>
 #include "types/HelloWorldPubSubTypes.h"
+#include "types/samplePubSubTypes.h"
 
 #include <thread>
 using namespace eprosima::fastrtps;
@@ -19,7 +20,6 @@ using namespace eprosima::fastrtps::rtps;
 using namespace Cpp::Api;
 
 TestApiClient::TestApiClient(std::string name)
-    : m_helloType(new HelloWorldPubSubType())
 {
     eprosima::fastdds::dds::DomainParticipantQos participant_qos = eprosima::fastdds::dds::PARTICIPANT_QOS_DEFAULT;
     participant_qos.name(name);
@@ -31,8 +31,12 @@ TestApiClient::TestApiClient(std::string name)
         return;
     }
 
-    //REGISTER THE TYPE
-    m_helloType.register_type(mp_participant);
+    m_types.push_back(static_cast<eprosima::fastdds::dds::TypeSupport>(new HelloWorldPubSubType()));
+    m_types.push_back(static_cast<eprosima::fastdds::dds::TypeSupport>(new samplePubSubType()));
+    for (auto type : m_types)
+    {
+        type.register_type(mp_participant);
+    }
 
     m_ClientPublisher = std::make_unique<ClientPublisher>(mp_participant);
     m_ClientSubscriber = std::make_unique<ClientSubscriber>(mp_participant);
@@ -41,7 +45,9 @@ TestApiClient::TestApiClient(std::string name)
 
 TestApiClient::~TestApiClient()
 {
-
+    m_ClientPublisher.reset();
+    m_ClientSubscriber.reset();
+    mp_participant->delete_contained_entities();
     if (mp_participant)
     {
         eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->delete_participant(mp_participant);
@@ -61,5 +67,9 @@ void TestApiClient::requestPropertyChange(int value) {
 }
 void TestApiClient::remoteMethodCall(int value)
 {
-
+    if (m_ClientPublisher->_is_ready())
+    {
+        auto id = m_ClientPublisher->request_funcInt(value);
+        m_ClientSubscriber->_add_pending_call_id(id);
+    }
 }

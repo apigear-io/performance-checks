@@ -11,6 +11,7 @@
 #include <fastdds/dds/core/LoanableSequence.hpp>
 #include <fastdds/dds/subscriber/SampleInfo.hpp>
 #include "types/HelloWorldPubSubTypes.h"
+#include "types/samplePubSubTypes.h"
 
 #include <thread>
 using namespace eprosima::fastrtps;
@@ -18,8 +19,7 @@ using namespace eprosima::fastrtps::rtps;
 
 
 TestApi0Service::TestApi0Service(std::shared_ptr< Cpp::Api::ITestApi0> api)
-    : m_api(api),
-     m_helloType(new HelloWorldPubSubType())
+    : m_api(api)
 {
     m_api->_getPublisher().subscribeToAllChanges(*this);
 
@@ -32,10 +32,16 @@ TestApi0Service::TestApi0Service(std::shared_ptr< Cpp::Api::ITestApi0> api)
         std::cerr << "Failed to create DomainParticipant!" << std::endl;
         return;
     }
-    m_helloType.register_type(mp_participant);
+    m_types.push_back(static_cast<eprosima::fastdds::dds::TypeSupport>(new HelloWorldPubSubType()));
+    m_types.push_back(static_cast<eprosima::fastdds::dds::TypeSupport>(new samplePubSubType()));
+    for (auto type : m_types)
+    {
+        type.register_type(mp_participant);
+    }
 
-    m_ServiceSubscriber = std::make_unique<ServiceSubscriber>(mp_participant, m_api);
+
     m_ServicePublisher = std::make_unique<ServicePublisher>(mp_participant);
+    m_ServiceSubscriber = std::make_unique<ServiceSubscriber>(mp_participant, m_api, *(m_ServicePublisher.get()));
 
 }
 

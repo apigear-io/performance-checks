@@ -10,6 +10,10 @@
 #include <fastdds/dds/core/LoanableSequence.hpp>
 #include <fastdds/dds/subscriber/SampleInfo.hpp>
 #include "api/generated/core/testapi0.publisher.h"
+#include <fastdds/dds/core/status/StatusMask.hpp>
+#include <fastdds/rtps/common/GuidPrefix_t.hpp>
+#include <fastdds/rtps/common/SampleIdentity.h>
+#include "../types/sample.h"
 
 
 namespace {
@@ -17,22 +21,32 @@ namespace {
     {
         map_to_fill["set_propInt"] = false;
         map_to_fill["sig_sigInt"] = false;
+        map_to_fill["rpc_resp_funcInt"] = false;
+    }
+
+    static std::string to_string(const eprosima::fastrtps::rtps::GuidPrefix_t& guid_prefix)
+    {
+        std::ostringstream key;
+        key << guid_prefix;
+        return key.str();
     }
 }
 
 
 ClientSubscriber::ClientSubscriber(eprosima::fastdds::dds::DomainParticipant* paritcipant)
-    : m_paritcipant(paritcipant),
-    n_matched(0)
+    : m_paritcipant(paritcipant)
 {
     m_subscriber = m_paritcipant->create_subscriber(eprosima::fastdds::dds::SUBSCRIBER_QOS_DEFAULT, nullptr);
     m_publisher = std::make_shared<Cpp::Api::TestApi0Publisher>();
+    m_topic_filter_expression = "key_value = '" + to_string(m_paritcipant->guid().guidPrefix) + "'";
+    m_filter_name_client_id = "key_value_filter" + to_string(m_paritcipant->guid().guidPrefix);
 }
 void ClientSubscriber::init()
 {
     fill_topics_matched(topics_matched);
     m_topicReaders.push_back(createTopicSubscriber("set_propInt", "HelloWorld"));
     m_topicReaders.push_back(createTopicSubscriber("sig_sigInt", "HelloWorld"));
+    m_topicReaders.push_back(createTopicSubscriber("rpc_resp_funcInt", "sample"));
 }
 eprosima::fastdds::dds::DataReader* ClientSubscriber::createTopicSubscriber(std::string topic, std::string dataType)
 {
@@ -41,6 +55,25 @@ eprosima::fastdds::dds::DataReader* ClientSubscriber::createTopicSubscriber(std:
     eprosima::fastdds::dds::DataReaderQos rqos = eprosima::fastdds::dds::DATAREADER_QOS_DEFAULT;
     rqos.reliability().kind = eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS;
     return m_subscriber->create_datareader(a_topic, rqos, this);
+}
+
+eprosima::fastdds::dds::DataReader* ClientSubscriber::createFilteredTopicSubscriber(std::string topic, std::string dataType)
+{
+    eprosima::fastdds::dds::Topic* a_topic = m_paritcipant->create_topic(topic, dataType, eprosima::fastdds::dds::TOPIC_QOS_DEFAULT);
+    topics.push_back(a_topic);
+    auto filtered_topic = m_paritcipant->create_contentfilteredtopic(m_filter_name_client_id, a_topic,
+        m_topic_filter_expression,
+        reply_topic_filter_parameters_);
+    filtered_topics.push_back(filtered_topic);
+
+    if (nullptr == filtered_topic)
+    {
+        throw std::runtime_error("Failed to create filtered topic");
+    }
+    eprosima::fastdds::dds::DataReaderQos rqos = eprosima::fastdds::dds::DATAREADER_QOS_DEFAULT;
+    rqos.reliability().kind = eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS;
+
+    return m_subscriber->create_datareader(filtered_topic, rqos, nullptr, eprosima::fastdds::dds::StatusMask::none());
 }
 
 ClientSubscriber::~ClientSubscriber()
@@ -53,6 +86,10 @@ ClientSubscriber::~ClientSubscriber()
     {
         m_paritcipant->delete_subscriber(m_subscriber);
     }
+    for (auto topic : filtered_topics)
+    {
+        m_paritcipant->delete_contentfilteredtopic(topic);
+    }
     for (auto topic : topics)
     {
         m_paritcipant->delete_topic(topic);
@@ -64,6 +101,13 @@ bool ClientSubscriber::_is_ready()
     bool all_matched = std::find_if(topics_matched.begin(), topics_matched.end(), [](auto& element) {return element.second == false; })
         == topics_matched.end();
     return topics_matched.size() > 0 && all_matched;
+}
+
+
+void ClientSubscriber::_add_pending_call_id(eprosima::fastrtps::rtps::SampleIdentity id)
+{
+    std::unique_lock<std::mutex> lock(calls_ids_mutex);
+    pending_calls.push_back(id);
 }
 
 void ClientSubscriber::on_subscription_matched(
@@ -118,6 +162,37 @@ void ClientSubscriber::on_data_available(eprosima::fastdds::dds::DataReader* rea
             std::cout << "Received sig emitted int: " << l_message.index() << std::endl;
             m_publisher->publishSigInt(l_message.index());
         }
+    }
+    if (reader->get_topicdescription()->get_name() == "rpc_resp_funcInt")
+    {
+        sample reply;
+        auto status = reader->take_next_sample(&reply, &info);
+        if (status != ReturnCode_t::RETCODE_OK) { return; }
+
+        std::unique_lock<std::mutex> lock(calls_ids_mutex);
+        auto call = pending_calls.begin();
+        // TODO somehow this does not compile
+       // auto call = std::find(pending_calls.begin(),
+       //     pending_calls.end(),
+       //     [&info](eprosima::fastrtps::rtps::SampleIdentity& el)
+       //     {
+       //         return el.sequence_number() == info.related_sample_identity.sequence_number(); 
+       //     });
+
+       // if (call != pending_calls.end())
+        {
+            // TODO return value
+            auto index = reply.index();
+            auto seq_num = info.related_sample_identity.sequence_number();
+            //pending_calls.erase(call);
+            lock.unlock();
+            std::cout<< "Reply received  to request with ID '" << seq_num << "' with result: '" << std::to_string(index) << std::endl;
+        }
+       // else
+       // {
+      //      lock.unlock();
+      //      std::cout << "Reply received from server  with unknown request ID '" << info.related_sample_identity.sequence_number() << std::endl;
+      //  }
     }
 }
 
