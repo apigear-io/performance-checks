@@ -71,83 +71,83 @@ class CdrSizeCalculator;
 
 
 /*!
- * @brief This class represents the structure sample defined by the user in the IDL file.
+ * @brief This class represents the structure Sample defined by the user in the IDL file.
  * @ingroup sample
  */
-class sample
+class Sample
 {
 public:
 
     /*!
      * @brief Default constructor.
      */
-    eProsima_user_DllExport sample();
+    eProsima_user_DllExport Sample();
 
     /*!
      * @brief Default destructor.
      */
-    eProsima_user_DllExport ~sample();
+    eProsima_user_DllExport ~Sample();
 
     /*!
      * @brief Copy constructor.
-     * @param x Reference to the object sample that will be copied.
+     * @param x Reference to the object Sample that will be copied.
      */
-    eProsima_user_DllExport sample(
-            const sample& x);
+    eProsima_user_DllExport Sample(
+            const Sample& x);
 
     /*!
      * @brief Move constructor.
-     * @param x Reference to the object sample that will be copied.
+     * @param x Reference to the object Sample that will be copied.
      */
-    eProsima_user_DllExport sample(
-            sample&& x) noexcept;
+    eProsima_user_DllExport Sample(
+            Sample&& x) noexcept;
 
     /*!
      * @brief Copy assignment.
-     * @param x Reference to the object sample that will be copied.
+     * @param x Reference to the object Sample that will be copied.
      */
-    eProsima_user_DllExport sample& operator =(
-            const sample& x);
+    eProsima_user_DllExport Sample& operator =(
+            const Sample& x);
 
     /*!
      * @brief Move assignment.
-     * @param x Reference to the object sample that will be copied.
+     * @param x Reference to the object Sample that will be copied.
      */
-    eProsima_user_DllExport sample& operator =(
-            sample&& x) noexcept;
+    eProsima_user_DllExport Sample& operator =(
+            Sample&& x) noexcept;
 
     /*!
      * @brief Comparison operator.
-     * @param x sample object to compare.
+     * @param x Sample object to compare.
      */
     eProsima_user_DllExport bool operator ==(
-            const sample& x) const;
+            const Sample& x) const;
 
     /*!
      * @brief Comparison operator.
-     * @param x sample object to compare.
+     * @param x Sample object to compare.
      */
     eProsima_user_DllExport bool operator !=(
-            const sample& x) const;
+            const Sample& x) const;
 
     /*!
      * @brief This function sets a value in member index
      * @param _index New value for member index
      */
     eProsima_user_DllExport void index(
-            uint8_t _index);
+            int32_t _index);
 
     /*!
      * @brief This function returns the value of member index
      * @return Value of member index
      */
-    eProsima_user_DllExport uint8_t index() const;
+    eProsima_user_DllExport int32_t index() const;
 
     /*!
      * @brief This function returns a reference to member index
      * @return Reference to member index
      */
-    eProsima_user_DllExport uint8_t& index();
+    eProsima_user_DllExport int32_t& index();
 
 
     /*!
@@ -178,7 +178,7 @@ public:
 
 private:
 
-    uint8_t m_index{0};
+    int32_t m_index{0};
     std::string m_key_value;
 
 };

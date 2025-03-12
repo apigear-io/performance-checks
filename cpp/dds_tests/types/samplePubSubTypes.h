@@ -41,18 +41,18 @@
 
 
 /*!
- * @brief This class represents the TopicDataType of the type sample defined by the user in the IDL file.
+ * @brief This class represents the TopicDataType of the type Sample defined by the user in the IDL file.
  * @ingroup sample
  */
-class samplePubSubType : public eprosima::fastdds::dds::TopicDataType
+class SamplePubSubType : public eprosima::fastdds::dds::TopicDataType
 {
 public:
 
-    typedef sample type;
+    typedef Sample type;
 
-    eProsima_user_DllExport samplePubSubType();
+    eProsima_user_DllExport SamplePubSubType();
 
-    eProsima_user_DllExport ~samplePubSubType() override;
+    eProsima_user_DllExport ~SamplePubSubType() override;
 
     eProsima_user_DllExport bool serialize(
             void* data,

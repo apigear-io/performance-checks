@@ -39,7 +39,7 @@ namespace fastcdr {
 template<>
 eProsima_user_DllExport size_t calculate_serialized_size(
         eprosima::fastcdr::CdrSizeCalculator& calculator,
-        const sample& data,
+        const Sample& data,
         size_t& current_alignment)
 {
     static_cast<void>(data);
@@ -67,7 +67,7 @@ eProsima_user_DllExport size_t calculate_serialized_size(
 template<>
 eProsima_user_DllExport void serialize(
         eprosima::fastcdr::Cdr& scdr,
-        const sample& data)
+        const Sample& data)
 {
     eprosima::fastcdr::Cdr::state current_state(scdr);
     scdr.begin_serialize_type(current_state,
@@ -85,7 +85,7 @@ eProsima_user_DllExport void serialize(
 template<>
 eProsima_user_DllExport void deserialize(
         eprosima::fastcdr::Cdr& cdr,
-        sample& data)
+        Sample& data)
 {
     cdr.deserialize_type(eprosima::fastcdr::CdrVersion::XCDRv2 == cdr.get_cdr_version() ?
             eprosima::fastcdr::EncodingAlgorithmFlag::DELIMIT_CDR2 :
@@ -113,7 +113,7 @@ eProsima_user_DllExport void deserialize(
 
 void serialize_key(
         eprosima::fastcdr::Cdr& scdr,
-        const sample& data)
+        const Sample& data)
 {
     static_cast<void>(scdr);
     static_cast<void>(data);

@@ -33,7 +33,7 @@ namespace ApiGear {
 class IMethodResonder
 {
 public:
-    virtual void sendResp_funcInt(sample reply, eprosima::fastrtps::rtps::WriteParams params) = 0;
+    virtual void sendResp_funcInt(Sample reply, eprosima::fastrtps::rtps::WriteParams params) = 0;
 };
 
 
@@ -46,7 +46,7 @@ public:
     bool publishProp(int value);
     bool publishSig(int value);
     bool _is_ready();
-    void sendResp_funcInt(sample reply, eprosima::fastrtps::rtps::WriteParams params) override;
+    void sendResp_funcInt(Sample reply, eprosima::fastrtps::rtps::WriteParams params) override;
 private:
     eprosima::fastdds::dds::DataWriter* createTopicPublisher(std::string topic, std::string dataType);
     eprosima::fastdds::dds::DomainParticipant* m_participant;

@@ -24,8 +24,8 @@
 
 #include "sample.h"
 
-constexpr uint32_t sample_max_cdr_typesize {268UL};
-constexpr uint32_t sample_max_key_cdr_typesize {260UL};
+constexpr uint32_t Sample_max_cdr_typesize {268UL};
+constexpr uint32_t Sample_max_key_cdr_typesize {260UL};
 
 
 namespace eprosima {
@@ -38,7 +38,7 @@ class CdrSizeCalculator;
 
 eProsima_user_DllExport void serialize_key(
         eprosima::fastcdr::Cdr& scdr,
-        const sample& data);
+        const Sample& data);
 
 
 } // namespace fastcdr

@@ -33,7 +33,7 @@ TestApi0Service::TestApi0Service(std::shared_ptr< Cpp::Api::ITestApi0> api)
         return;
     }
     m_types.push_back(static_cast<eprosima::fastdds::dds::TypeSupport>(new HelloWorldPubSubType()));
-    m_types.push_back(static_cast<eprosima::fastdds::dds::TypeSupport>(new samplePubSubType()));
+    m_types.push_back(static_cast<eprosima::fastdds::dds::TypeSupport>(new SamplePubSubType()));
     for (auto type : m_types)
     {
         type.register_type(mp_participant);

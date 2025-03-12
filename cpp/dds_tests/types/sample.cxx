@@ -39,30 +39,30 @@ using namespace eprosima::fastcdr::exception;
 
 
 
-sample::sample()
+Sample::Sample()
 {
 }
 
-sample::~sample()
+Sample::~Sample()
 {
 }
 
-sample::sample(
-        const sample& x)
+Sample::Sample(
+        const Sample& x)
 {
     m_index = x.m_index;
     m_key_value = x.m_key_value;
 }
 
-sample::sample(
-        sample&& x) noexcept
+Sample::Sample(
+        Sample&& x) noexcept
 {
     m_index = x.m_index;
     m_key_value = std::move(x.m_key_value);
 }
 
-sample& sample::operator =(
-        const sample& x)
+Sample& Sample::operator =(
+        const Sample& x)
 {
 
     m_index = x.m_index;
@@ -70,8 +70,8 @@ sample& sample::operator =(
     return *this;
 }
 
-sample& sample::operator =(
-        sample&& x) noexcept
+Sample& Sample::operator =(
+        Sample&& x) noexcept
 {
 
     m_index = x.m_index;
@@ -79,15 +79,15 @@ sample& sample::operator =(
     return *this;
 }
 
-bool sample::operator ==(
-        const sample& x) const
+bool Sample::operator ==(
+        const Sample& x) const
 {
     return (m_index == x.m_index &&
            m_key_value == x.m_key_value);
 }
 
-bool sample::operator !=(
-        const sample& x) const
+bool Sample::operator !=(
+        const Sample& x) const
 {
     return !(*this == x);
 }
@@ -96,8 +96,8 @@ bool sample::operator !=(
  * @brief This function sets a value in member index
  * @param _index New value for member index
  */
-void sample::index(
-        uint8_t _index)
+void Sample::index(
+        int32_t _index)
 {
     m_index = _index;
 }
@@ -106,7 +106,7 @@ void sample::index(
  * @brief This function returns the value of member index
  * @return Value of member index
  */
-uint8_t sample::index() const
+int32_t Sample::index() const
 {
     return m_index;
 }
@@ -115,7 +115,7 @@ uint8_t sample::index() const
  * @brief This function returns a reference to member index
  * @return Reference to member index
  */
-uint8_t& sample::index()
+int32_t& Sample::index()
 {
     return m_index;
 }
@@ -125,7 +125,7 @@ uint8_t& sample::index()
  * @brief This function copies the value in member key_value
  * @param _key_value New value to be copied in member key_value
  */
-void sample::key_value(
+void Sample::key_value(
         const std::string& _key_value)
 {
     m_key_value = _key_value;
@@ -135,7 +135,7 @@ void sample::key_value(
  * @brief This function moves the value in member key_value
  * @param _key_value New value to be moved in member key_value
  */
-void sample::key_value(
+void Sample::key_value(
         std::string&& _key_value)
 {
     m_key_value = std::move(_key_value);
@@ -145,7 +145,7 @@ void sample::key_value(
  * @brief This function returns a constant reference to member key_value
  * @return Constant reference to member key_value
  */
-const std::string& sample::key_value() const
+const std::string& Sample::key_value() const
 {
     return m_key_value;
 }
@@ -154,7 +154,7 @@ const std::string& sample::key_value() const
  * @brief This function returns a reference to member key_value
  * @return Reference to member key_value
  */
-std::string& sample::key_value()
+std::string& Sample::key_value()
 {
     return m_key_value;
 }

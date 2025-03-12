@@ -14,6 +14,7 @@
 #include <fastdds/rtps/common/GuidPrefix_t.hpp>
 #include <fastdds/rtps/common/SampleIdentity.h>
 #include "../types/sample.h"
+#include "../types/sampleTypeObject.h"
 
 
 namespace {
@@ -44,9 +45,10 @@ ClientSubscriber::ClientSubscriber(eprosima::fastdds::dds::DomainParticipant* pa
 void ClientSubscriber::init()
 {
     fill_topics_matched(topics_matched);
+    registersampleTypes();
     m_topicReaders.push_back(createTopicSubscriber("set_propInt", "HelloWorld"));
     m_topicReaders.push_back(createTopicSubscriber("sig_sigInt", "HelloWorld"));
-    m_topicReaders.push_back(createTopicSubscriber("rpc_resp_funcInt", "sample"));
+    m_topicReaders.push_back(createFilteredTopicSubscriber("rpc_resp_funcInt", "Sample"));
 }
 eprosima::fastdds::dds::DataReader* ClientSubscriber::createTopicSubscriber(std::string topic, std::string dataType)
 {
@@ -165,7 +167,7 @@ void ClientSubscriber::on_data_available(eprosima::fastdds::dds::DataReader* rea
     }
     if (reader->get_topicdescription()->get_name() == "rpc_resp_funcInt")
     {
-        sample reply;
+        Sample reply;
         auto status = reader->take_next_sample(&reply, &info);
         if (status != ReturnCode_t::RETCODE_OK) { return; }
         {

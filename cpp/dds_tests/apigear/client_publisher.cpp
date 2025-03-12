@@ -37,7 +37,7 @@ void ClientPublisher::init()
 {
     fill_topics_matched(topics_matched);
     m_propertyChangedWriter = createTopicPublisher("prop_propInt", "HelloWorld");
-    m_method_funcIntWriter = createTopicPublisher("rpc_funcInt", "sample");
+    m_method_funcIntWriter = createTopicPublisher("rpc_funcInt", "Sample");
     m_requests_pool = std::make_unique<ApiGear::Utilities::ThreadPool>(1);
 };
 
@@ -138,7 +138,7 @@ eprosima::fastrtps::rtps::SampleIdentity ClientPublisher::request_funcInt(int va
        // std::lock_guard<std::mutex> lock(mtx_);
 
         eprosima::fastrtps::rtps::WriteParams params;
-        sample message;
+        Sample message;
         message.index(value);
         message.key_value();
         m_method_funcIntWriter->write(&message, params);

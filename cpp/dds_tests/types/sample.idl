@@ -1,4 +1,6 @@
-struct sample{
-    octet index;
-    @Key string key_value;
+@extensibility(APPENDABLE)
+struct Sample{
+    long index;
+    @Key @filterable 
+	string key_value;
 };

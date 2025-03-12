@@ -31,7 +31,7 @@ void ServiceSubscriber::init()
 {
     fill_topics_matched(topics_matched);
     m_topicReaders.push_back(createTopicSubscriber("prop_propInt", "HelloWorld"));
-    m_topicReaders.push_back(createTopicSubscriber("rpc_funcInt", "sample"));
+    m_topicReaders.push_back(createTopicSubscriber("rpc_funcInt", "Sample"));
 }
 eprosima::fastdds::dds::DataReader* ServiceSubscriber::createTopicSubscriber(std::string topic, std::string dataType)
 {
@@ -105,7 +105,7 @@ void ServiceSubscriber::on_data_available(eprosima::fastdds::dds::DataReader* re
     }
     if (reader->get_topicdescription()->get_name() == "rpc_funcInt")
     {
-        sample l_message;
+        Sample l_message;
         if (reader->take_next_sample(&l_message, &info) == ReturnCode_t::RETCODE_OK)
         {
             auto client_guid_prefix = eprosima::fastrtps::rtps::iHandle2GUID(info.publication_handle).guidPrefix;
@@ -116,7 +116,7 @@ void ServiceSubscriber::on_data_available(eprosima::fastdds::dds::DataReader* re
             auto result = m_api->funcInt(l_message.index());
 
             // Prepare the reply
-            sample reply;
+            Sample reply;
             auto key = l_message.key_value();
             reply.key_value(key);
             std::cout << "key value " << reply.key_value()<< " "<< key << std::endl;

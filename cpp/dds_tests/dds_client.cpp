@@ -32,10 +32,11 @@ TestApiClient::TestApiClient(std::string name)
     }
 
     m_types.push_back(static_cast<eprosima::fastdds::dds::TypeSupport>(new HelloWorldPubSubType()));
-    m_types.push_back(static_cast<eprosima::fastdds::dds::TypeSupport>(new samplePubSubType()));
+    m_types.push_back(static_cast<eprosima::fastdds::dds::TypeSupport>(new SamplePubSubType()));
     for (auto type : m_types)
     {
         type.register_type(mp_participant);
+        std::cout << type.get_type_name() << std::endl;
     }
 
     m_ClientPublisher = std::make_unique<ClientPublisher>(mp_participant);

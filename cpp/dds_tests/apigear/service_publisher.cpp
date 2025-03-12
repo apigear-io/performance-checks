@@ -38,7 +38,7 @@ void ServicePublisher::init()
     fill_topics_matched(topics_matched);
     m_propertyChangedWriter = createTopicPublisher("set_propInt", "HelloWorld");
     mp_singalEmitWriter = createTopicPublisher("sig_sigInt", "HelloWorld");
-    m_funcIntRespWriter = createTopicPublisher("rpc_resp_funcInt", "sample");
+    m_funcIntRespWriter = createTopicPublisher("rpc_resp_funcInt", "Sample");
     m_requests_pool = std::make_unique<ApiGear::Utilities::ThreadPool>(1);
 };
 
@@ -128,7 +128,7 @@ bool ServicePublisher::publishSig(int value)
     return false;
 }
 
-void ServicePublisher::sendResp_funcInt(sample reply, eprosima::fastrtps::rtps::WriteParams params)
+void ServicePublisher::sendResp_funcInt(Sample reply, eprosima::fastrtps::rtps::WriteParams params)
 {
     std::cout<<"sending reply to request with value "<< reply.index();
     m_funcIntRespWriter->write(&reply, params);
