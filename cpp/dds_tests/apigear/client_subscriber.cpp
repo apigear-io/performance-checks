@@ -168,31 +168,31 @@ void ClientSubscriber::on_data_available(eprosima::fastdds::dds::DataReader* rea
         sample reply;
         auto status = reader->take_next_sample(&reply, &info);
         if (status != ReturnCode_t::RETCODE_OK) { return; }
-
-        std::unique_lock<std::mutex> lock(calls_ids_mutex);
-        auto call = pending_calls.begin();
-        // TODO somehow this does not compile
-       // auto call = std::find(pending_calls.begin(),
-       //     pending_calls.end(),
-       //     [&info](eprosima::fastrtps::rtps::SampleIdentity& el)
-       //     {
-       //         return el.sequence_number() == info.related_sample_identity.sequence_number(); 
-       //     });
-
-       // if (call != pending_calls.end())
         {
-            // TODO return value
-            auto index = reply.index();
-            auto seq_num = info.related_sample_identity.sequence_number();
-            //pending_calls.erase(call);
-            lock.unlock();
-            std::cout<< "Reply received  to request with ID '" << seq_num << "' with result: '" << std::to_string(index) << std::endl;
+            using namespace eprosima::fastrtps::rtps;
+            std::unique_lock<std::mutex> lock(calls_ids_mutex);
+            auto call = std::find_if(pending_calls.begin(),
+                      pending_calls.end(),
+                      [info](auto el)
+                      {
+                         return info.related_sample_identity.sequence_number() == el.sequence_number();
+                      });
+
+                if (call != pending_calls.end())
+            {
+                // TODO return value
+                auto index = reply.index();
+                auto seq_num = info.related_sample_identity.sequence_number();
+                pending_calls.erase(call);
+                lock.unlock();
+                std::cout << "Reply received  to request with ID '" << seq_num << "' with result: '" << std::to_string(index) << std::endl;
+            }
+            else
+            {
+                lock.unlock();
+                std::cout << "Reply received from server  with unknown request ID '" << info.related_sample_identity.sequence_number() << std::endl;
+            }
         }
-       // else
-       // {
-      //      lock.unlock();
-      //      std::cout << "Reply received from server  with unknown request ID '" << info.related_sample_identity.sequence_number() << std::endl;
-      //  }
     }
 }
 
