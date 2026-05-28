@@ -80,3 +80,7 @@ OBJECT LINK CORE ONLY TESTS
 Tests created without the network layer. They connect client's write function with server's handle message, and server's write function with client's handle message.
 The are added for cpp template for now.
 They can be run just by starting a test target. It contains both server and client side in one app, as no network is required.
+
+## License
+
+Licensed under the [MIT License](./LICENSE). See [LICENSE](./LICENSE) for details.
