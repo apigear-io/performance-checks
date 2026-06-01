@@ -1,8 +1,8 @@
 #include "../helpers/inspected_sink.h"
 #include "api/generated/olink/testapi0client.h"
 
-#include "../helpers/olink_network_protocol_handler_for_test.hpp"
-#include "../helpers/latency_helpers.h"
+#include "../olink_network_protocol_handler_for_test.hpp"
+#include "../../latency_helpers/latency_helpers.h"
 #include "../../scenario_templates/single_object_many_threads/executeTestFunction.h"
 
 #include <memory>

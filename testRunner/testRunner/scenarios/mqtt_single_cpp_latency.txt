@@ -1,0 +1,19 @@
+servers:
+CPP_BUILD/mqtt_single_server.exe
+clients:
+CPP_BUILD/mqtt_single_client_syncMethodInt.exe 1 1
+CPP_BUILD/mqtt_single_client_syncMethodInt.exe 10 1
+CPP_BUILD/mqtt_single_client_syncMethodInt.exe 100 1
+CPP_BUILD/mqtt_single_client_syncMethodInt.exe 1000 1
+CPP_BUILD/mqtt_single_client_setIntProperty.exe 1 1
+CPP_BUILD/mqtt_single_client_setIntProperty.exe 10 1
+CPP_BUILD/mqtt_single_client_setIntProperty.exe 100 1
+CPP_BUILD/mqtt_single_client_setIntProperty.exe 1000 1
+CPP_BUILD/mqtt_single_client_asyncMethodInt.exe 1 1
+CPP_BUILD/mqtt_single_client_asyncMethodInt.exe 10 1
+CPP_BUILD/mqtt_single_client_asyncMethodInt.exe 100 1
+CPP_BUILD/mqtt_single_client_asyncMethodInt.exe 1000 1
+CPP_BUILD/mqtt_single_client_syncSetIntProperty.exe 1 1
+CPP_BUILD/mqtt_single_client_syncSetIntProperty.exe 10 1
+CPP_BUILD/mqtt_single_client_syncSetIntProperty.exe 100 1
+CPP_BUILD/mqtt_single_client_syncSetIntProperty.exe 1000 1

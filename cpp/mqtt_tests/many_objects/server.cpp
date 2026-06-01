@@ -1,6 +1,6 @@
 #include "apigear/mqtt/mqttservice.h"
-#include "../helpers/test_message_topics.h"
-#include "../helpers/prepare_test_services.h"
+#include "../test_message_topics.h"
+#include "helpers/prepare_test_services.h"
 #include <memory>
 #include <chrono>
 #include <iostream>

@@ -1,33 +1,55 @@
-#include "../helpers/itestsink.h"
 #include "api/generated/mqtt/testapi0client.h"
 #include "../../scenario_templates/single_object_many_threads/executeTestFunction.h"
-#include "../helpers/mqtt_network_protocol_handler_for_test.hpp"
+#include "../mqtt_network_protocol_handler_for_test.hpp"
+#include "../../latency_helpers/latency_helpers.h"
 
 #include <memory>
-
+#include <chrono>
 
 class PropertyIntTestData
 {
 public:
-    PropertyIntTestData(std::shared_ptr<ApiGear::MQTT::Client> client)
-    {
-        auto obj =  std::make_shared<TestSink<Cpp::Api::MQTT::TestApi0Client>>(client);
-        m_testFunction = [obj](uint32_t value)
+PropertyIntTestData(std::shared_ptr<ApiGear::MQTT::Client> client,
+    std::vector<chrono_hr_timepoint>& latenciesStart,
+    std::vector<chrono_hr_timepoint>& latenciesStop)
+    :m_latenciesStart(latenciesStart),
+    m_latenciesStop(latenciesStop)
+{
+    sink = std::make_shared<Cpp::Api::MQTT::TestApi0Client>(client);
+    sink->_getPublisher().subscribeToPropIntChanged([this](int propInt)
         {
-        // Add one, to avoid setting property to 0 as first call, 0 is default property and it won't be set for same value.
-            obj->setPropInt(value + 1);
-        };
-        sink = obj;
-    }
+            auto index = propInt - 1;
+            m_latenciesStop[index] = std::chrono::high_resolution_clock::now();
+            count++;
+        });
+}
 
     void testFunction(uint32_t value)
     {
-        m_testFunction(value);
+        m_latenciesStart[value] = std::chrono::high_resolution_clock::now();
+        sink->setPropInt(value + 1);
     }
 
-public:
-    std::function<void(uint32_t)> m_testFunction;
-    std::shared_ptr<ITestSink> sink;
+    bool allResponsesReceived(uint32_t sentRequestsNumber) const
+    {
+        return count == sentRequestsNumber;
+    }
+
+    bool isReady() const
+    {
+        return sink->_is_ready();
+    }
+
+    uint32_t receivedMessages() const
+    {
+        return count;
+    }
+
+private:
+    std::atomic<uint32_t> count{ 0 };
+    std::shared_ptr<Cpp::Api::MQTT::TestApi0Client> sink;
+    std::vector<chrono_hr_timepoint>& m_latenciesStart;
+    std::vector<chrono_hr_timepoint>& m_latenciesStop;
 };
 
 /*
@@ -53,8 +75,14 @@ int main(int argc, char* argv[])
     std::string brokerUrl = "tcp://localhost:1883";
     MqttHandlerForTest networkProtocolHandler(brokerUrl);
 
-    PropertyIntTestData testObject(networkProtocolHandler.getClient());
+    auto total_messages_number = messages_number * sendThreadNumber;
+    std::vector<chrono_hr_timepoint> m_latenciesStart(total_messages_number, chrono_hr_timepoint());
+    std::vector<chrono_hr_timepoint> m_latenciesStop(total_messages_number, chrono_hr_timepoint());
+
+    PropertyIntTestData testObject(networkProtocolHandler.getClient(), m_latenciesStart, m_latenciesStop);
     executeTestFunction(testObject, networkProtocolHandler, messages_number, sendThreadNumber);
+
     networkProtocolHandler.getClient()->disconnect();
+    calculateAndPrintLatencyParameters(m_latenciesStart, m_latenciesStop);
 }
 

@@ -1,7 +1,7 @@
 #include "api/generated/mqtt/testapi0service.h"
 #include "api/implementation/testapi0.h"
 #include "apigear/mqtt/mqttservice.h"
-#include "../helpers/test_message_topics.h"
+#include "../test_message_topics.h"
 #include <memory>
 #include <chrono>
 #include <iostream>
@@ -27,8 +27,12 @@ public:
         :m_service(service)
     {
 
-         m_service.subscribeTopic(TestMessages::clientStartsTestTopic, [this](const auto&, const auto&, const auto&){ countStartMessages++;  std::cout<< "started";});
-         m_service.subscribeTopic(TestMessages::clientStopsTestTopic, [this](const auto&, const auto&, const auto&){countStopMessages++; std::cout << "stopped";});
+         m_service.subscribeTopic(TestMessages::clientStartsTestTopic,
+             [this](const auto&, const auto&, const auto&){ countStartMessages++;  std::cout<< "started";},
+             [](auto topic, auto val) {});
+         m_service.subscribeTopic(TestMessages::clientStopsTestTopic,
+             [this](const auto&, const auto&, const auto&){countStopMessages++; std::cout << "stopped";},
+             [](auto topic, auto val) {});
     }
 
     ~TestWatcher()
